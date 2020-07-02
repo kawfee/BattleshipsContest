@@ -21,10 +21,7 @@ while ( True ):
 				break
 			print('Read: "{0}"'.format(data))
 
-
 	with open(FIFO2, 'w') as fifo2:
 		print("FIFO2 opened")
 		fifo2.write("My name is Ai2")
 		print("Message sent")
-
-
