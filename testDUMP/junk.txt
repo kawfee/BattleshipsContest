@@ -1,0 +1,325 @@
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0  38148  5620 ?        Ss    2019  10:00 /lib/systemd/systemd --system --deserialize 27
+root         2  0.0  0.0      0     0 ?        S     2019   0:02 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S     2019   0:22 [ksoftirqd/0]
+root         7  0.0  0.0      0     0 ?        S     2019  33:10 [rcu_sched]
+root         8  0.0  0.0      0     0 ?        S     2019   0:00 [rcu_bh]
+root         9  0.0  0.0      0     0 ?        S     2019   0:02 [migration/0]
+root        10  0.0  0.0      0     0 ?        S     2019   0:43 [watchdog/0]
+root        11  0.0  0.0      0     0 ?        S     2019   0:35 [watchdog/1]
+root        12  0.0  0.0      0     0 ?        S     2019   0:02 [migration/1]
+root        13  0.0  0.0      0     0 ?        S     2019   0:13 [ksoftirqd/1]
+root        16  0.0  0.0      0     0 ?        S     2019   0:34 [watchdog/2]
+root        17  0.0  0.0      0     0 ?        S     2019   0:01 [migration/2]
+root        18  0.0  0.0      0     0 ?        S     2019   0:36 [ksoftirqd/2]
+root        21  0.0  0.0      0     0 ?        S     2019   0:34 [watchdog/3]
+root        22  0.0  0.0      0     0 ?        S     2019   0:02 [migration/3]
+root        23  0.0  0.0      0     0 ?        S     2019   0:07 [ksoftirqd/3]
+root        26  0.0  0.0      0     0 ?        S     2019   0:27 [watchdog/4]
+root        27  0.0  0.0      0     0 ?        S     2019   0:03 [migration/4]
+root        28  0.0  0.0      0     0 ?        S     2019   0:02 [ksoftirqd/4]
+root        31  0.0  0.0      0     0 ?        S     2019   0:35 [watchdog/5]
+root        32  0.0  0.0      0     0 ?        S     2019   0:03 [migration/5]
+root        33  0.0  0.0      0     0 ?        S     2019   0:02 [ksoftirqd/5]
+root        36  0.0  0.0      0     0 ?        S     2019   0:35 [watchdog/6]
+root        37  0.0  0.0      0     0 ?        S     2019   0:03 [migration/6]
+root        38  0.0  0.0      0     0 ?        S     2019   0:02 [ksoftirqd/6]
+root        41  0.0  0.0      0     0 ?        S     2019   0:36 [watchdog/7]
+root        42  0.0  0.0      0     0 ?        S     2019   0:03 [migration/7]
+root        43  0.0  0.0      0     0 ?        S     2019   0:02 [ksoftirqd/7]
+root        46  0.0  0.0      0     0 ?        S     2019   0:00 [kdevtmpfs]
+root        47  0.0  0.0      0     0 ?        S<    2019   0:00 [netns]
+root        48  0.0  0.0      0     0 ?        S<    2019   0:00 [perf]
+root        49  0.0  0.0      0     0 ?        S     2019   0:13 [khungtaskd]
+root        50  0.0  0.0      0     0 ?        S<    2019   0:00 [writeback]
+root        51  0.0  0.0      0     0 ?        SN    2019   0:00 [ksmd]
+root        52  0.0  0.0      0     0 ?        SN    2019   2:21 [khugepaged]
+root        53  0.0  0.0      0     0 ?        S<    2019   0:00 [crypto]
+root        54  0.0  0.0      0     0 ?        S<    2019   0:00 [kintegrityd]
+root        55  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        56  0.0  0.0      0     0 ?        S<    2019   0:00 [kblockd]
+root        57  0.0  0.0      0     0 ?        S<    2019   0:00 [ata_sff]
+root        58  0.0  0.0      0     0 ?        S<    2019   0:00 [md]
+root        59  0.0  0.0      0     0 ?        S<    2019   0:00 [devfreq_wq]
+root        70  0.0  0.0      0     0 ?        S     2019   0:15 [kswapd0]
+root        71  0.0  0.0      0     0 ?        S<    2019   0:00 [vmstat]
+root        72  0.0  0.0      0     0 ?        S     2019   0:00 [fsnotify_mark]
+root        73  0.0  0.0      0     0 ?        S     2019   0:00 [ecryptfs-kthrea]
+root        89  0.0  0.0      0     0 ?        S<    2019   0:00 [kthrotld]
+root        90  0.0  0.0      0     0 ?        S<    2019   0:00 [acpi_thermal_pm]
+root        91  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        92  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        93  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        94  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        95  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        96  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        97  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root        98  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       102  0.0  0.0      0     0 ?        S<    2019   0:00 [ipv6_addrconf]
+root       117  0.0  0.0      0     0 ?        S<    2019   0:00 [deferwq]
+root       118  0.0  0.0      0     0 ?        S<    2019   0:00 [charger_manager]
+root       169  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_0]
+root       170  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_0]
+root       171  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_1]
+root       172  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_1]
+root       177  0.0  0.0      0     0 ?        S<    2019   0:00 [kpsmoused]
+root       178  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_2]
+root       179  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_2]
+root       180  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_3]
+root       181  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_3]
+root       184  0.0  0.0      0     0 ?        S<    2019   0:00 [firewire]
+root       185  0.0  0.0      0     0 ?        S<    2019   0:00 [firewire_ohci]
+root       194  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_4]
+root       195  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_4]
+root       196  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_5]
+root       197  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_5]
+root       198  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_6]
+root       199  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_6]
+root       200  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_7]
+root       202  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_7]
+root       203  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_8]
+root       204  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_8]
+root       205  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_9]
+root       206  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_9]
+root       213  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_10]
+root       214  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_10]
+root       215  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_11]
+root       216  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_11]
+root       217  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_12]
+root       218  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_12]
+root       219  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_13]
+root       220  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_13]
+root       221  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_14]
+root       222  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_14]
+root       223  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_15]
+root       224  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_15]
+root       225  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_16]
+root       226  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_16]
+root       227  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_17]
+root       228  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_17]
+root       237  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_18]
+root       238  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_18]
+root       239  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_19]
+root       240  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_19]
+root       243  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_20]
+root       244  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_20]
+root       245  0.0  0.0      0     0 ?        S     2019   0:00 [scsi_eh_21]
+root       246  0.0  0.0      0     0 ?        S<    2019   0:00 [scsi_tmf_21]
+root       249  0.0  0.0      0     0 ?        S<    2019   0:00 [ttm_swap]
+root       251  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       258  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       259  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       260  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       290  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       296  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       297  0.0  0.0      0     0 ?        S<    2019   0:00 [kmirrord]
+root       298  0.0  0.0      0     0 ?        S<    2019   0:00 [kcopyd]
+root       299  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       300  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       311  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       315  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       318  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       432  0.0  0.0      0     0 ?        S<    2019   0:00 [raid5wq]
+root       477  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       479  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       497  0.0  0.0      0     0 ?        S<    2019   0:00 [kdmflush]
+root       499  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       519  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root       545  0.0  0.0      0     0 ?        D     2019   5:46 [jbd2/dm-4-8]
+root       546  0.0  0.0      0     0 ?        S<    2019   0:00 [ext4-rsv-conver]
+root       604  0.0  0.0      0     0 ?        S     2019   0:00 [kauditd]
+root       611  0.0  0.0  43880 11172 ?        Ss    2019   4:45 /lib/systemd/systemd-journald
+root       637  0.0  0.0      0     0 ?        S<    2019   0:00 [iscsi_eh]
+root       651  0.0  0.0      0     0 ?        S<    2019   0:00 [ib_addr]
+root       657  0.0  0.0      0     0 ?        S<    2019   0:00 [ib_mcast]
+root       658  0.0  0.0      0     0 ?        S<    2019   0:00 [ib_nl_sa_wq]
+root       659  0.0  0.0      0     0 ?        S<    2019   0:00 [ib_cm]
+root       660  0.0  0.0      0     0 ?        S<    2019   0:00 [iw_cm_wq]
+root       662  0.0  0.0      0     0 ?        S<    2019   0:00 [rdma_cm]
+root       663  0.0  0.0      0     0 ?        S<    2019   0:00 [rpciod]
+root       679  0.0  0.0 102964  1356 ?        Ss    2019   0:00 /sbin/lvmetad -f
+root       778  0.0  0.0  28852  1724 ?        Ss    2019   0:00 /usr/sbin/rpc.gssd
+root       781  0.0  0.0      0     0 ?        S<    2019   0:00 [edac-poller]
+root       814  0.0  0.0      0     0 ?        S<    2019   0:00 [kvm-irqfd-clean]
+root      1118  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root      1119  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root      1120  0.0  0.0      0     0 ?        S<    2019   0:00 [bioset]
+root      1417  0.0  0.0  47620  2376 ?        Ss    2019   0:14 /sbin/rpcbind -f -w
+syslog    1423  0.0  0.0 268636  3672 ?        Ssl   2019   1:54 /usr/sbin/rsyslogd -n
+root      1425  0.0  0.0 458388  2908 ?        Ssl   2019  11:09 /usr/bin/lxcfs /var/lib/lxcfs/
+root      1427  0.0  0.0   4392  1248 ?        Ss    2019   0:00 /usr/sbin/acpid
+root      1432  0.0  0.0 203404  3484 ?        Ss    2019  12:08 /usr/sbin/sssd -i -f
+message+  1435  0.0  0.0  55284  2808 ?        Ss    2019   8:31 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+root      1451  0.0  0.0  29872  1032 ?        Ss    2019   0:00 /sbin/cgmanager -m name=systemd
+root      1489  0.0  0.0  13368   144 ?        Ss    2019   0:01 /sbin/mdadm --monitor --pid-file /run/mdadm/monitor.pid --daemonise --scan --syslog
+root      1491  0.0  0.0   5216   116 ?        Ss    2019   3:56 /sbin/iscsid
+root      1492  0.0  0.0   5716  3508 ?        S<Ls  2019  18:38 /sbin/iscsid
+root      1540  0.0  0.0  65508  3164 ?        Ss    2019   0:02 /usr/sbin/sshd -D
+statd     1544  0.0  0.0  37720  2532 ?        Ss    2019   0:00 /sbin/rpc.statd --no-notify
+root      1556  0.0  0.0      0     0 ?        S<    2019   0:00 [nfsiod]
+root      1564  0.0  0.0      0     0 ?        S     2019   0:00 [lockd]
+root      1615  0.0  0.1 199328 13760 ?        S     2019  22:01 /usr/lib/x86_64-linux-gnu/sssd/sssd_nss --uid 0 --gid 0 --debug-to-files
+root      1616  0.0  0.0 177392  4196 ?        S     2019   9:34 /usr/lib/x86_64-linux-gnu/sssd/sssd_pam --uid 0 --gid 0 --debug-to-files
+root      1617  0.0  0.0 305264  6416 ?        Ssl   2019  12:29 /usr/lib/accountsservice/accounts-daemon
+root      1619  0.0  0.0  23564  5996 ?        Ss    2019   4:09 /lib/systemd/systemd-logind
+root      1621  0.0  0.0 174588 11756 ?        Ssl   2019   0:00 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+root      1629  0.0  0.1 292468 14316 ?        Sl    2019  34:21 /usr/bin/python3 /usr/bin/fail2ban-server -s /var/run/fail2ban/fail2ban.sock -p /var/run/fail2ban/fail2ban.pid -x -b
+root      1632  0.0  0.0 291308  4084 ?        Ssl   2019   0:13 /usr/lib/policykit-1/polkitd --no-debug
+daemon    1702  0.0  0.0  26040  2008 ?        Ss    2019   0:00 /usr/sbin/atd -f
+root      1729  0.0  0.0 799368  5008 ?        Ssl   2019  15:45 /usr/sbin/nscd
+root      1730  0.0  0.0  39300  2572 ?        Ss    2019   0:56 /usr/sbin/cron -f
+root      1750  0.0  0.0  19568  1896 ?        Ss    2019  12:01 /usr/sbin/irqbalance --pid=/var/run/irqbalance.pid
+root      1878  0.0  0.0  59980  2844 ?        Ss    2019   1:07 /usr/lib/postfix/sbin/master
+postfix   1888  0.0  0.0  61784  2724 ?        S     2019   0:29 qmgr -l -t unix -u
+root      1990  0.0  0.0   7696   388 tty1     Ss+   2019   0:00 /sbin/agetty --noclear tty1 linux
+root      2879  0.0  0.0      0     0 ?        S<   May21   0:00 [kworker/5:0H]
+fmarsh    3917  0.0  0.0  45840  5412 pts/3    S+   May01   0:00 vim Board.cpp
+root      4840  0.0  0.0      0     0 ?        S    Jul01   0:02 [kworker/7:0]
+lrose     4995  0.0  0.0  37172  4264 ?        Ss   May04   0:01 /lib/systemd/systemd --user
+lrose     4999  0.0  0.0  70584   220 ?        S    May04   0:00 (sd-pam)
+wslauson  5257  0.0  0.0  37176  2728 ?        Ss   Apr04   0:04 /lib/systemd/systemd --user
+wslauson  5262  0.0  0.0  70448    72 ?        S    Apr04   0:00 (sd-pam)
+wslauson  5577  0.0  0.0  25544  7308 ?        Ss   Apr04   8:08 tmux
+wslauson  5578  0.0  0.0  16432  6820 pts/2    Ss+  Apr04   0:03 -bash
+wslauson  5591  0.0  0.0  15748  6156 pts/8    Ss   Apr04   0:02 -bash
+root      5661  0.0  0.0  31892  2780 ?        Ss   May14   0:00 SCREEN -S shared
+cbell     5662  0.0  0.0  14532  5136 pts/14   Ss+  May14   0:00 /bin/bash
+root      6418  0.0  0.0      0     0 ?        S<   Jan08   0:00 [xfsalloc]
+root      6419  0.0  0.0      0     0 ?        S<   Jan08   0:00 [xfs_mru_cache]
+root      6429  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsIO]
+root      6430  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6431  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6432  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6433  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6434  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6435  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6436  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6437  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsCommit]
+root      6438  0.0  0.0      0     0 ?        S    Jan08   0:00 [jfsSync]
+wslauson  6867  0.0  0.0  46072  8788 pts/8    S+   May26   0:15 vim SlausonPlayerV2.cpp
+root      7052  0.0  0.0      0     0 ?        S<   Jul01   0:00 [kworker/7:1H]
+mbouch    7053  0.0  0.0  37092  4892 ?        Ss   Jul01   0:00 /lib/systemd/systemd --user
+mbouch    7059  0.0  0.0  70540  2084 ?        S    Jul01   0:00 (sd-pam)
+root      7157  0.0  0.0      0     0 ?        S    Jul01   0:00 [kworker/7:2]
+root      8145  0.0  0.0      0     0 ?        S<   May26   0:00 [kworker/3:0H]
+root      8171  0.0  0.0      0     0 ?        S<   Jul01   0:00 [kworker/2:1H]
+root      8654  0.0  0.0      0     0 ?        S    Jul01   0:02 [kworker/2:1]
+root      9310  0.0  0.0      0     0 ?        S    Jul01   0:01 [kworker/3:1]
+root      9721  0.0  0.0  32028  2956 ?        Ss   Jul01   0:00 SCREEN -S shared
+mbouch    9722  0.0  0.0  14648  5364 pts/6    Ss+  Jul01   0:00 /bin/bash
+root     11225  0.0  0.0      0     0 ?        S<   Jun16   0:00 [kworker/3:1H]
+root     11502  0.0  0.0      0     0 ?        S    06:04   0:01 [kworker/0:1]
+root     11882  0.0  0.0      0     0 ?        S<   May22   0:00 [kworker/0:1H]
+root     11910  0.0  0.0      0     0 ?        S    06:25   0:00 [kworker/4:1]
+root     11950  0.0  0.0      0     0 ?        S    06:25   0:00 [kworker/0:2]
+root     11977  0.0  0.0      0     0 ?        S    06:25   0:00 [kworker/3:0]
+root     11984  0.0  0.0      0     0 ?        S    06:25   0:00 [kworker/6:2]
+root     12333  0.0  0.0      0     0 ?        S<   May14   0:00 [kworker/6:1H]
+root     12769  0.0  0.0      0     0 ?        S    10:11   0:00 [kworker/6:1]
+root     12887  0.0  0.0 106140  7264 ?        Ss   10:48   0:00 sshd: tdsouza [priv]
+root     12890  0.0  0.0      0     0 ?        S<   10:48   0:00 [kworker/6:2H]
+root     12891  0.0  0.0      0     0 ?        S<   10:48   0:00 [kworker/4:1H]
+tdsouza  12892  0.0  0.0  37092  4940 ?        Ss   10:48   0:00 /lib/systemd/systemd --user
+root     12896  0.0  0.0      0     0 ?        S    10:48   0:00 [kworker/5:1]
+tdsouza  12899  0.0  0.0  70540  2084 ?        S    10:48   0:00 (sd-pam)
+tdsouza  12973  0.0  0.0 106140  3520 ?        S    10:48   0:00 sshd: tdsouza@pts/4
+tdsouza  12974  0.0  0.0  14484  4928 pts/4    Ss   10:48   0:00 -bash
+tdsouza  12988  0.0  0.0  39216  6260 pts/4    S+   10:48   0:00 ssh root@ldap
+root     13371  0.0  0.0      0     0 ?        S    11:27   0:00 [kworker/1:2]
+root     13504  0.0  0.0      0     0 ?        S    12:01   0:00 [kworker/2:0]
+nphinney 13516  0.0  0.0  37184  2412 ?        Ss   Apr09   0:03 /lib/systemd/systemd --user
+nphinney 13523  0.0  0.0  70448     4 ?        S    Apr09   0:00 (sd-pam)
+root     13693  0.0  0.0 106140  7156 ?        Ss   13:01   0:00 sshd: jgorski [priv]
+jgorski  13699  0.0  0.0  37092  4868 ?        Ss   13:02   0:00 /lib/systemd/systemd --user
+root     13702  0.0  0.0      0     0 ?        S    13:02   0:00 [kworker/1:0]
+root     13704  0.0  0.0      0     0 ?        S    13:02   0:00 [kworker/4:2]
+jgorski  13705  0.0  0.0  70540  2084 ?        S    13:02   0:00 (sd-pam)
+jgorski  13779  0.6  0.0 107844  5996 ?        S    13:02   0:25 sshd: jgorski@pts/5
+jgorski  13780  0.0  0.0  14492  4996 pts/5    Ss   13:02   0:00 -bash
+root     13809  0.0  0.0 106140  7064 ?        Ss   13:02   0:00 sshd: mbouch [priv]
+mbouch   13862  0.9  0.0 106292  4452 ?        S    13:02   0:38 sshd: mbouch@pts/9
+mbouch   13863  0.0  0.0  14484  4956 pts/9    Ss   13:02   0:00 -bash
+root     13941  0.0  0.0      0     0 ?        S    13:05   0:00 [kworker/5:0]
+postfix  14137  0.0  0.0  61624  2712 ?        S    13:32   0:00 pickup -l -t unix -u -c
+root     14335  0.2  0.0      0     0 ?        S    13:46   0:03 [kworker/u32:1]
+jgorski  14349  0.0  0.0  31536  3028 pts/5    S+   13:48   0:00 screen -S shared
+root     14350  0.2  0.0  32012  3056 ?        Ss   13:48   0:02 SCREEN -S shared
+jgorski  14351  0.0  0.0  14652  5352 pts/7    Ss   13:48   0:00 /bin/bash
+jgorski  14364  0.0  0.0  31536  3056 pts/9    S+   13:48   0:00 screen -r jgorski shared
+root     14423  0.0  0.0      0     0 ?        S    13:58   0:00 [kworker/u32:0]
+root     14452  0.0  0.0      0     0 ?        S    14:02   0:00 [kworker/u32:3]
+root     14466  0.0  0.0 106140  7064 ?        Ss   14:04   0:00 sshd: mbouch [priv]
+root     14495  0.0  0.0      0     0 ?        S<   Jun05   0:00 [kworker/2:0H]
+mbouch   14542  0.0  0.0 106140  3348 ?        S    14:05   0:00 sshd: mbouch@pts/11
+mbouch   14543  0.0  0.0  14484  5024 pts/11   Ss+  14:05   0:00 -bash
+root     14558  0.0  0.0      0     0 ?        S    14:05   0:00 [kworker/0:0]
+jgorski  14575  0.0  0.0   4500   796 pts/7    S    14:08   0:00 /bin/sh -c python ai1.py
+jgorski  14576  0.0  0.0   4500   700 pts/7    S    14:08   0:00 /bin/sh -c python ai2.py
+jgorski  14577  0.0  0.0  24568  6544 pts/7    S    14:08   0:00 python ai1.py
+jgorski  14578  0.0  0.0  24568  6556 pts/7    S    14:08   0:00 python ai2.py
+jgorski  14621  0.0  0.0  29152  1476 pts/7    R+   14:09   0:00 ps -aux
+rswanson 14894  0.0  0.0  15372  4916 ?        S    May13   0:00 -bash
+rswanson 14896  0.0  0.0   9668  2296 ?        S    May13   0:00 make test_server
+rswanson 14897  0.0  0.0   7232  4268 ?        S    May13  18:09 ./server 8080
+rswanson 15202  0.0  0.0  37168  4068 ?        Ss   May02   0:01 /lib/systemd/systemd --user
+rswanson 15209  0.0  0.0  70584    44 ?        S    May02   0:00 (sd-pam)
+jgarey   15852  0.0  0.0  37180  2208 ?        Ss   Apr09   0:03 /lib/systemd/systemd --user
+jgarey   15857  0.0  0.0  70448     4 ?        S    Apr09   0:00 (sd-pam)
+root     16728  0.0  0.0  36944  2268 ?        Ss   Apr08   0:03 /lib/systemd/systemd --user
+root     16731  0.0  0.0  76276   108 ?        S    Apr08   0:00 (sd-pam)
+root     17348  0.0  0.0  27776  2072 ?        Ss   Apr08   0:00 SCREEN -S shared
+root     17349  0.0  0.0  13152  1940 pts/10   Ss+  Apr08   0:00 /bin/bash
+root     17418  0.0  0.0  32864  3488 ?        Ss   Apr09   0:00 SCREEN
+nphinney 17419  0.0  0.0  14524  2900 pts/36   Ss+  Apr09   0:00 /bin/bash
+nphinney 17508  0.0  0.0  14524  3636 pts/38   Ss+  Apr09   0:00 /bin/bash
+nphinney 17542  0.0  0.0  14524  3528 pts/40   Ss+  Apr09   0:00 /bin/bash
+root     18193  0.0  0.0  32160  2880 ?        Ss   Apr09   0:00 SCREEN -S shared
+nphinney 18194  0.0  0.0  14628  3884 pts/32   Ss+  Apr09   0:00 /bin/bash
+root     20316  0.0  0.0  32016  2052 ?        Ss   Apr09   0:00 SCREEN -S shared
+jgarey   20317  0.0  0.0  14496  2872 pts/16   Ss+  Apr09   0:00 /bin/bash
+dstanley 21249  0.0  0.0  37072  4860 ?        Ss   May18   0:00 /lib/systemd/systemd --user
+dstanley 21255  0.0  0.0  70540  2084 ?        S    May18   0:00 (sd-pam)
+dstanley 21387  0.0  0.0   4560   720 ?        S    May18   0:00 ./a.out
+dstanley 21391  0.0  0.0      0     0 ?        Z    May18   0:00 [a.out] <defunct>
+hbologna 21542  0.0  0.0  37184  2720 ?        Ss   Apr21   0:03 /lib/systemd/systemd --user
+hbologna 21546  0.0  0.0  70584   280 ?        S    Apr21   0:00 (sd-pam)
+awhitman 21953  0.0  0.0  37204  4908 ?        Ss   May14   0:00 /lib/systemd/systemd --user
+awhitman 21956  0.0  0.0  70540  2064 ?        S    May14   0:00 (sd-pam)
+dfletche 22219  0.0  0.0  37152  2772 ?        Ss   Jan13   0:08 /lib/systemd/systemd --user
+dfletche 22223  0.0  0.0  70252   264 ?        S    Jan13   0:00 (sd-pam)
+dfletche 22293  0.0  0.0   4500   628 ?        S    Jan13   0:00 sh /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/4454769affdb83e84721305835b300e943ca0d61/server.sh --enable-remote-auto-shutdown --port=0
+dfletche 22301  0.0  0.1 945560 18348 ?        Sl   Jan13   2:19 /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/4454769affdb83e84721305835b300e943ca0d61/node /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/4454769affdb83e84721305835b300e943ca0d61/out/vs/server/main.js --enable-remote-auto-shutdown --port=0
+root     22339  0.0  0.0  32100  3048 ?        Ss   May14   0:05 SCREEN -S shared
+awhitman 22340  0.0  0.0  14616  5348 pts/41   Ss+  May14   0:00 /bin/bash
+dfletche 23393  0.0  0.0   4500   792 ?        S    Jan13   0:00 sh /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/8b6e0efc0a98639085fabeb5226a516785424796/server.sh --host=127.0.0.1 --enable-remote-auto-shutdown --port=0
+dfletche 23401  0.0  0.1 883700 16388 ?        Sl   Jan13   2:18 /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/8b6e0efc0a98639085fabeb5226a516785424796/node /home/CS/users/dfletche/.linux/.vscode-server-oss/bin/8b6e0efc0a98639085fabeb5226a516785424796/out/vs/server/main.js --host=127.0.0.1 --enable-remote-auto-shutdown --port=0
+root     23674  0.0  0.0      0     0 ?        S<   Jun23   0:07 [kworker/1:1H]
+root     23675  0.0  0.0      0     0 ?        S<   Jun23   0:00 [kworker/0:0H]
+root     24371  0.0  0.1 206700 24352 ?        Ss   May28   1:11 php-fpm: master process (/etc/php/7.0/fpm/php-fpm.conf)
+www-data 24373  0.0  0.0 206700  6364 ?        S    May28   0:00 php-fpm: pool www
+www-data 24374  0.0  0.0 206700  6364 ?        S    May28   0:00 php-fpm: pool www
+root     24412  0.0  0.0  36136  3396 ?        Ss   Feb06   0:06 /lib/systemd/systemd-udevd
+root     24513  0.0  0.0  32148  2648 ?        Ss   Apr21   0:00 SCREEN -S shared
+hbologna 24514  0.0  0.0  14520  3628 pts/22   Ss+  Apr21   0:00 /bin/bash
+root     25651  0.0  0.0  32160  3020 ?        Ss   May13   0:05 SCREEN -S shared
+lrose    25652  0.0  0.0  14612  5412 pts/21   Ss+  May13   0:00 /bin/bash
+root     26241  0.0  0.4 283092 58504 ?        S    Mar25  66:56 /usr/lib/x86_64-linux-gnu/sssd/sssd_be --domain cs.local --uid 0 --gid 0 --debug-to-files
+cbell    26747  0.0  0.0  37204  2696 ?        Ss   Apr09   0:03 /lib/systemd/systemd --user
+cbell    26753  0.0  0.0  70588   268 ?        S    Apr09   0:00 (sd-pam)
+mkim     26850  0.0  0.0  37204  2224 ?        Ss   Apr09   0:04 /lib/systemd/systemd --user
+mkim     26853  0.0  0.0  70588     4 ?        S    Apr09   0:00 (sd-pam)
+root     26858  0.0  0.0      0     0 ?        S<   May14   0:00 [kworker/7:2H]
+root     26883  0.0  0.0      0     0 ?        S<   May14   0:00 [kworker/4:2H]
+root     26995  0.0  0.0  32028  2304 ?        Ss   Apr09   0:00 SCREEN -S shared
+mkim     26996  0.0  0.0  14520  3820 pts/51   Ss+  Apr09   0:00 /bin/bash
+root     27082  0.0  0.0      0     0 ?        S<   May18   0:00 [kworker/1:2H]
+ntp      28033  0.0  0.0  98228  2108 ?        Ss   Jan08   6:51 /usr/sbin/ntpd -p /var/run/ntpd.pid -g -u 113:118
+hpark    28316  0.0  0.0  37204  4076 ?        Ss   Apr09   0:04 /lib/systemd/systemd --user
+hpark    28320  0.0  0.0  70588    24 ?        S    Apr09   0:00 (sd-pam)
+root     28545  0.0  0.0  32188  2832 ?        Ss   Apr09   0:00 SCREEN -S shared
+hpark    28546  0.0  0.0  14520  2336 pts/26   Ss+  Apr09   0:00 /bin/bash
+root     30056  0.0  0.0      0     0 ?        S<   Jun10   0:00 [kworker/5:1H]
+fmarsh   30129  0.0  0.0  37172  4560 ?        Ss   May01   0:01 /lib/systemd/systemd --user
+fmarsh   30133  0.0  0.0  70584   304 ?        S    May01   0:00 (sd-pam)
+root     32547  0.0  0.0  32176  2788 ?        Ss   May01   0:00 SCREEN
+fmarsh   32548  0.0  0.0  14568  3720 pts/3    Ss   May01   0:00 /bin/bash
