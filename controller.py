@@ -1,6 +1,9 @@
+#!/usr/bin/python3
+
 import os
 import errno
 import subprocess
+import time
 
 FIFO1 = 'mypipe1'
 
@@ -19,24 +22,24 @@ except OSError as oe:
         raise
 
 
-p1 = subprocess.Popen("python ai1.py", shell=True)
-p2 = subprocess.Popen("python ai2.py", shell=True)
+p1 = subprocess.Popen("./ai1.py", shell=False)
+p2 = subprocess.Popen("./ai2.py", shell=False)
 
 pid1=p1.pid
 pid2=p2.pid
 
 rounds=0
-print("Opening FIFO1...")
-while (rounds<10):
 
+while (rounds<10):
+    time.sleep(2)
     # This starts the first Ai
     with open(FIFO1, 'w') as fifo1:
-        print("FIFO1 opened")
-        fifo1.write("Hi")
-        print("Message sent")
+        print("CONT: FIFO1 opened")
+        fifo1.write("cmd " + str(rounds))
+        print("CONT: Message sent")
 
     with open(FIFO1, 'r') as fifo1:
-        print("FIFO1 opened")
+        print("CONT: FIFO1 opened")
         while True:
             data = fifo1.read()
             if len(data) == 0:
@@ -46,12 +49,12 @@ while (rounds<10):
     
     # This starts the second Ai
     with open(FIFO2, 'w') as fifo2:
-        print("FIFO2 opened")
-        fifo2.write("Hi")
+        print("CONT: FIFO2 opened")
+        fifo2.write("cmd " + str(rounds))
         print("Message sent")
 
     with open(FIFO2, 'r') as fifo2:
-        print("FIFO2 opened")
+        print("CONT: FIFO2 opened")
         while True:
             data = fifo2.read()
             if len(data) == 0:
@@ -60,5 +63,5 @@ while (rounds<10):
             print('Read: "{0}"'.format(data))
     rounds+=1
  
-subprocess.run(("kill "+pid1), shell=True)
-subprocess.run(("kill "+pid2), shell=True)
+p1.kill()
+p2.kill()
