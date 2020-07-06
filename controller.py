@@ -5,63 +5,73 @@ import errno
 import subprocess
 import time
 
-FIFO1 = 'mypipe1'
+FIFO1CTA = 'cta1'
+FIFO1ATC = 'atc1'
 
+FIFO2CTA = 'cta2'
+FIFO2ATC = 'atc2'
+
+#FIFO1 - (R & W)
 try:
-    os.mkfifo(FIFO1)
+    os.mkfifo(FIFO1CTA)
+except OSError as oe: 
+    if oe.errno != errno.EEXIST:
+        raise
+try:
+    os.mkfifo(FIFO1ATC)
 except OSError as oe: 
     if oe.errno != errno.EEXIST:
         raise
 
-FIFO2 = 'mypipe2'
-
+#FIFO2 - (R & W)        
 try:
-    os.mkfifo(FIFO2)
+    os.mkfifo(FIFO2CTA)
 except OSError as oe: 
     if oe.errno != errno.EEXIST:
         raise
-
+try:
+    os.mkfifo(FIFO2ATC)
+except OSError as oe: 
+    if oe.errno != errno.EEXIST:
+        raise
 
 p1 = subprocess.Popen("./ai1.py", shell=False)
 p2 = subprocess.Popen("./ai2.py", shell=False)
 
-pid1=p1.pid
-pid2=p2.pid
-
 rounds=0
 
 while (rounds<10):
-    time.sleep(2)
     # This starts the first Ai
-    with open(FIFO1, 'w') as fifo1:
-        print("CONT: FIFO1 opened")
-        fifo1.write("cmd " + str(rounds))
+    with open(FIFO1CTA, 'w') as fifo1cta:
+        print("CONT: FIFO1CTA opened")
+        fifo1cta.write("cmd " + str(rounds))
         print("CONT: Message sent")
 
-    with open(FIFO1, 'r') as fifo1:
-        print("CONT: FIFO1 opened")
+    with open(FIFO1ATC, 'r') as fifo1atc:
+        print("CONT: FIFO1ATC opened")
         while True:
-            data = fifo1.read()
+            data = fifo1atc.read()
             if len(data) == 0:
                 print("Writer closed")
                 break
             print('Read: "{0}"'.format(data))
     
     # This starts the second Ai
-    with open(FIFO2, 'w') as fifo2:
-        print("CONT: FIFO2 opened")
-        fifo2.write("cmd " + str(rounds))
+    with open(FIFO2CTA, 'w') as fifo2cta:
+        print("CONT: FIFO2CTA opened")
+        fifo2cta.write("cmd " + str(rounds))
         print("Message sent")
 
-    with open(FIFO2, 'r') as fifo2:
-        print("CONT: FIFO2 opened")
+    with open(FIFO2ATC, 'r') as fifo2atc:
+        print("CONT: FIFO2atc opened")
         while True:
-            data = fifo2.read()
+            data = fifo2atc.read()
             if len(data) == 0:
                 print("Writer closed")
                 break
             print('Read: "{0}"'.format(data))
     rounds+=1
+    time.sleep(0.5)
  
 p1.kill()
 p2.kill()
