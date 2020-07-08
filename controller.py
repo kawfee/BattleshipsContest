@@ -43,32 +43,38 @@ p2 = subprocess.Popen("./ai2.py", shell=False)
 
 data="junk data"
 rounds=0
+KP_WAIT_TIME=1
 winner=""
-msg = "ERROR: ai timed out"
+errMsg = "ERROR: ai timed out"
 
-stop_broadcast=Event()
+stop_broadcast1=Event()
+stop_broadcast2=Event()
 
 #FUNCTION SPACE
-def killProcess():
-    print("at killProcess")
+def killProcess(pipe):
+    print("KP: at killProcess")
     count = 0
     while True:
-        time.sleep(1)
+        time.sleep(KP_WAIT_TIME)
         count += 1
-        print("KillProcess count: " + str(count))
-        if(count>=5):
-            with open(FIFO1ATC, 'w') as fifo1atc:
-                print("killProcess is writing")
-                fifo1atc.write(msg)
+        if pipe=='atc1' and stop_broadcast1.is_set():
+            print("KP: stop_broadcast1 is set")
             break
-        if stop_broadcast.is_set():
+        if pipe=='atc2' and stop_broadcast2.is_set():
+            print("KP: stop_broadcast2 is set")
+            break
+        print("KP: KillProcess count: " + str(count) + " " + pipe)
+        if count>=5:
+            with open(pipe, 'w') as fifoatc:
+                print("KP: killProcess is writing")
+                fifoatc.write(errMsg)
             break
 
 #MAIN SPACE
 while (rounds<10 and winner==""):
     # This starts the first Ai
     # watchdog1 thread here
-    watchdog1=Thread(target=killProcess)
+    watchdog1=Thread(target=killProcess, args=(FIFO1ATC,))
     watchdog1.start()
 
     with open(FIFO1CTA, 'w') as fifo1cta:
@@ -82,28 +88,47 @@ while (rounds<10 and winner==""):
         data = fifo1atc.read()
         print("Data: "+str(data))
         print("DATA CLOSING_____DATA CLOSING_____DATA CLOSING")
-        print('Read: "{0}"'.format(data))
+        print('CONT: Read: "{0}"'.format(data))
     
-    if (data==msg):
+    if (data==errMsg):
         p1.kill()
         winner = "p2"
         break
     else:
-        stop_broadcast.set()
+        stop_broadcast1.set()
     # watchdog1 thread ends by here, if not before
     
     # This starts the second Ai
+    # watchdog2 thread here
+    watchdog2=Thread(target=killProcess, args=(FIFO2ATC,))
+    watchdog2.start()
+    
     with open(FIFO2CTA, 'w') as fifo2cta:
         print("CONT: FIFO2CTA opened")
         fifo2cta.write("cmd " + str(rounds))
-        print("Message sent")
-
+        print("CONT: Message sent")
+    
     with open(FIFO2ATC, 'r') as fifo2atc:
-        print("CONT: FIFO2atc opened")
+        print("CONT: FIFO2ATC opened")
+        print("DATA OPENING_____DATA OPENING_____DATA OPENING")
         data = fifo2atc.read()
-        print('Read: "{0}"'.format(data))
+        print("Data: "+str(data))
+        print("DATA CLOSING_____DATA CLOSING_____DATA CLOSING")
+        print('CONT: Read: "{0}"'.format(data))
+    
+    if (data==errMsg):
+        p2.kill()
+        winner = "p1"
+        break
+    else:
+        stop_broadcast2.set()
+    # watchdog2 thread ends by here, if not before
+    
     rounds+=1
-    time.sleep(0.5)
+    time.sleep(KP_WAIT_TIME)
+
+    stop_broadcast1.clear()
+    stop_broadcast2.clear()
 
 print("winner: " + winner)
 p1.kill()
