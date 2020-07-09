@@ -4,6 +4,7 @@ import os
 import errno
 import subprocess
 from threading import Thread, Event
+import threading
 import time
 
 
@@ -43,7 +44,6 @@ p2 = subprocess.Popen("./ai2.py", shell=False)
 
 data="junk data"
 rounds=0
-KP_WAIT_TIME=1
 winner=""
 errMsg = "ERROR: ai timed out"
 
@@ -55,7 +55,7 @@ def killProcess(pipe):
     print("KP: at killProcess")
     count = 0
     while True:
-        time.sleep(KP_WAIT_TIME)
+        time.sleep(.01)
         count += 1
         if pipe=='atc1' and stop_broadcast1.is_set():
             print("KP: stop_broadcast1 is set")
@@ -63,8 +63,9 @@ def killProcess(pipe):
         if pipe=='atc2' and stop_broadcast2.is_set():
             print("KP: stop_broadcast2 is set")
             break
-        print("KP: KillProcess count: " + str(count) + " " + pipe)
-        if count>=5:
+        if(count%100==0):
+            print("KP: KillProcess count: " + str(count) + " " + pipe)
+        if count>=500:
             with open(pipe, 'w') as fifoatc:
                 print("KP: killProcess is writing")
                 fifoatc.write(errMsg)
@@ -125,7 +126,8 @@ while (rounds<10 and winner==""):
     # watchdog2 thread ends by here, if not before
     
     rounds+=1
-    time.sleep(KP_WAIT_TIME)
+    time.sleep(.5)
+    print("Thread Count: " + str(threading.active_count()))
 
     stop_broadcast1.clear()
     stop_broadcast2.clear()
