@@ -5,8 +5,12 @@ class conio:
     def __init__(self):
         pass
 
+    def cprint(text):
+        print(text, end="")
+
     def gotoRowCol(self, row, col):
-        print(("\033[" + str(row) + ";" + str(col) + "H"), end="")
+        # Insert the goodies
+        self.cprint(("\033[" + str(row) + ";" + str(col) + "H"))
 
     def fgColor(self, color):
         return self.getColorSequence(color, Foreground)
@@ -15,13 +19,16 @@ class conio:
         return self.getColorSequence(color, Background)
 
     def setTextStyle(self, txtStyle):
-        print(("\033[" + str(txtStyle) + "m"), end="")
+        # Insert the goodies
+        self.cprint(("\033[" + str(txtStyle) + "m"))
 
     def resetAll(self):
-        print("\033[0m", end="")
+        # Insert the goodies
+        self.cprint("\033[0m")
 
     def clrscr(self):
-        print(("\033[2J" + "\033[H"), end="")
+        # Insert the goodies
+        self.cprint(("\033[2J" + "\033[H"))
 
     def getColorSequence(self, color, fgOrBg):
         BGOFFSET = 10
@@ -36,7 +43,8 @@ class conio:
                 break
 
         if tmp:
-            print(("\033[" + str(color + offset) + "m"), end="")
+            # Insert the goodies
+            self.cprint(("\033[" + str(color + offset) + "m"))
         else:
             return "conio: invalid color: " + str(color)
 
@@ -78,7 +86,7 @@ class TextStyle(Enum):
     NORMAL_INTENSITY = 10
     REVEAL = 11
 
-
+'''
 def main():
     con = conio()
     con.clrscr()
@@ -88,6 +96,4 @@ def main():
     con.bgColor(Color.GREEN.value)
     print("Hi")
     con.resetAll()
-
-
-main()
+'''
