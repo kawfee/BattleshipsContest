@@ -6,7 +6,7 @@ import subprocess
 from threading import Thread, Event
 import threading
 import time
-
+import json
 
 #VARIABLE SPACE
 FIFO1CTA = 'cta1'
@@ -47,6 +47,8 @@ rounds=0
 winner=""
 errMsg = "ERROR: ai timed out"
 
+name={"a":1, "b":2}
+
 stop_broadcast1=Event()
 stop_broadcast2=Event()
 
@@ -80,7 +82,7 @@ while (rounds<10 and winner==""):
 
     with open(FIFO1CTA, 'w') as fifo1cta:
         print("CONT: FIFO1CTA opened")
-        fifo1cta.write("cmd " + str(rounds))
+        fifo1cta.write(json.dumps(name))
         print("CONT: Message sent")
     
     with open(FIFO1ATC, 'r') as fifo1atc:
