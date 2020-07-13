@@ -47,7 +47,14 @@ rounds=0
 winner=""
 errMsg = "ERROR: ai timed out"
 
-name={"a":1, "b":2}
+'''
+msgTemplate = { "messageType":'', 
+                "row":-1, 
+                "col":-1, 
+                "length":-1, 
+                "string":"", 
+                "direction":-1, }
+'''
 
 stop_broadcast1=Event()
 stop_broadcast2=Event()
@@ -82,7 +89,7 @@ while (rounds<10 and winner==""):
 
     with open(FIFO1CTA, 'w') as fifo1cta:
         print("CONT: FIFO1CTA opened")
-        fifo1cta.write(json.dumps(name))
+        fifo1cta.write(json.dumps(msg))
         print("CONT: Message sent")
     
     with open(FIFO1ATC, 'r') as fifo1atc:
