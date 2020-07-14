@@ -1,62 +1,47 @@
+// C++ program to implement FIFO
+// This side reads first, then reads 
 #include <stdio.h> 
 #include <string.h> 
 #include <fcntl.h> 
 #include <sys/stat.h> 
 #include <sys/types.h> 
 #include <unistd.h> 
-#include <string>
-#include <vector>
 #include <iostream>
-#include <fstream>
 
-using namespace std;
 
 int main() 
 { 
-    int fd;
+	int fd1;
+	int fd2; 
+
+	// FIFO file path 
+	char * myfifo1 = "./cta1";
+	char * myfifo2 = "./atc1"; 
+
+	// Creating the named file(FIFO) 
+	// mkfifo(<pathname>,<permission>) 
+	//mkfifo(myfifo, 0666); 
+
+	char str1[80], str2[80]; 
+	while (1) 
+	{ 
+		// First open in read only and read 
+		fd1 = open(myfifo1, O_RDONLY); 
+		read(fd1, str1, 80); 
+
+		// Print the read string and close 
+        std::cout << "User1:" << str1 <<std::endl;
+		//printf("User1: %s\n", str1); 
+		close(fd1); 
     
-    // FIFO file path 
-    const char * myfifo1 = "./cta1"; 
-  
-    // Creating the named file(FIFO) 
-    // mkfifo(<pathname>, <permission>) 
-    //mkfifo(myfifo1, 0666); 
-  
-    char arr1[80], arr2[80]; 
-    while (1) 
-    { 
-  
-        // Open FIFO for Read only 
-        fd = open(myfifo1, O_RDONLY); 
-  
-        // Read from FIFO 
-        read(fd, arr1, sizeof(arr1)-1); 
-  
-        // Print the read message 
-        printf("User2: %s\n", arr1); 
-        close(fd); 
-        printf("closed successfully\n");
-        
-        // Open FIFO for write only 
-        fd = open(myfifo1, O_WRONLY); 
-        printf("opened succ\n");
-  
-        // Take an input arr2ing from user. 
-        // 80 is maximum length 
-        //fgets(arr2, 80, stdin); 
-        for(int i =0;i<10;i++){
-            arr2[i]=(char)i;
-        }
-        arr2[10]='\0';
-        printf("for succ\n");
-        
-        // Write the input arr2ing on FIFO 
-        // and close it 
-        printf("GOT TO THE WRITE!\n");
-        write(fd, arr2, strlen(arr2)+1); 
-        close(fd) ;
-
-    } 
-    return 0; 
+		// Now open in write mode and write 
+		// string taken from user.
+        std::cout << "About to open write" << std::endl; 
+		fd2 = open(myfifo2,O_WRONLY); 
+		strncpy(str2, "hello world\n", strlen("hello world\n"));
+		write(fd2, str2, strlen(str2)+1); 
+        std::cout << "Wrote message" << std::endl;
+		close(fd2); 
+	} 
+	return 0; 
 } 
-
