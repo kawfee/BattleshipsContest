@@ -8,10 +8,13 @@
 #include <sys/socket.h>  
 #include <netinet/in.h>  
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros  
+#include <iostream>
      
 #define TRUE   1  
 #define FALSE  0  
 #define PORT 54321  
+
+using namespace std;
      
 int main(int argc , char *argv[])   
 {   
@@ -122,7 +125,10 @@ int main(int argc , char *argv[])
             //inform user of socket number - used in send and receive commands  
             printf("New connection , socket fd is %d , ip is : %s , port : %d  \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs, (address.sin_port));   
            
-            //send new connection greeting message  
+            //send new connection greeting message 
+            cout << "Test Print 2: "
+                 << message
+                 << endl;
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )   
             {   
                 perror("send");   
@@ -172,7 +178,11 @@ int main(int argc , char *argv[])
                     //set the string terminating NULL byte on the end  
                     //of the data read  
                     buffer[valread] = '\0';   
-                    printf("Test Print: ", sd, " : ", buffer);
+                    cout << "Test Print: sd = "
+                         << sd
+                         << " : buffer = "
+                         << buffer
+                         << endl;
                     send(sd , buffer , strlen(buffer) , 0 );   
                 }   
             }   
@@ -181,4 +191,3 @@ int main(int argc , char *argv[])
          
     return 0;   
 }   
-
