@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <fstream>
 using namespace std;
-//client2 side
+//Client side
 int main(int argc, char *argv[])
 {
     //we need 2 things: ip address and port number, in that order
@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
     sendSockAddr.sin_addr.s_addr = 
         inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
     sendSockAddr.sin_port = htons(port);
-    int client2Sd = socket(AF_INET, SOCK_STREAM, 0);
+    int clientSd = socket(AF_INET, SOCK_STREAM, 0);
     //try to connect...
-    int status = connect(client2Sd,
+    int status = connect(clientSd,
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0)
     {
@@ -52,6 +52,17 @@ int main(int argc, char *argv[])
     gettimeofday(&start1, NULL);
     while(1)
     {
+        //read
+        cout << "Awaiting server response..." << endl;
+        memset(&msg, 0, sizeof(msg));//clear the buffer
+        bytesRead += recv(clientSd, (char*)&msg, sizeof(msg), 0);
+        if(!strcmp(msg, "exit")) {
+            cout << "Server has quit the session" << endl;
+            break;
+        }
+        cout << "Server: " << msg << endl;
+        
+        //write
         cout << ">";
         string data;
         getline(cin, data);
@@ -59,22 +70,13 @@ int main(int argc, char *argv[])
         strcpy(msg, data.c_str());
         if(data == "exit")
         {
-            send(client2Sd, (char*)&msg, strlen(msg), 0);
+            send(clientSd, (char*)&msg, strlen(msg), 0);
             break;
         }
-        bytesWritten += send(client2Sd, (char*)&msg, strlen(msg), 0);
-        cout << "Awaiting server response..." << endl;
-        memset(&msg, 0, sizeof(msg));//clear the buffer
-        bytesRead += recv(client2Sd, (char*)&msg, sizeof(msg), 0);
-        if(!strcmp(msg, "exit"))
-        {
-            cout << "Server has quit the session" << endl;
-            break;
-        }
-        cout << "Server: " << msg << endl;
+        bytesWritten += send(clientSd, (char*)&msg, strlen(msg), 0);
     }
     gettimeofday(&end1, NULL);
-    close(client2Sd);
+    close(clientSd);
     cout << "********Session********" << endl;
     cout << "Bytes written: " << bytesWritten << 
     " Bytes read: " << bytesRead << endl;
