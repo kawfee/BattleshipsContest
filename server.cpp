@@ -9,20 +9,24 @@
 #include <netinet/in.h>  
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros  
 #include <iostream>
-     
+#include <cstring>
+
+#include "json.hpp"
+
 #define TRUE   1  
 #define FALSE  0  
 #define PORT 54321  
 
 using namespace std;
-     
+using json = nlohmann::json;     
+
 int main(int argc , char *argv[])   
 {   
     int opt = TRUE;   
     int master_socket , addrlen , new_socket , client_socket[30] ,  
         max_clients = 2 , activity, i , valread , sd;
     int max_sd;
-    int sdTurn = -1;
+    int sdTurn = 0;
     struct sockaddr_in address;   
          
     char buffer[1025];  //data buffer of 1K  
@@ -30,9 +34,15 @@ int main(int argc , char *argv[])
     //set of socket descriptors  
     fd_set readfds;   
          
+    //base json object
+    json msg = {
+        {"count", 0},
+        {"client", "none"}
+    };
+
     //a message  
-    const char *message = "ECHO Daemon v1.0 \r\n";   
-     
+    const char *wMsg = "Connection established";   
+    
     //initialise all client_socket[] to 0 so not checked  
     for (i = 0; i < max_clients; i++)   
     {   
@@ -87,8 +97,9 @@ int main(int argc , char *argv[])
         //add master socket to set  
         FD_SET(master_socket, &readfds);   
         max_sd = master_socket;   
-             
+            
         //add child sockets to set  
+        /*
         for ( i = 0 ; i < max_clients ; i++)   
         {   
             //socket descriptor  
@@ -102,16 +113,34 @@ int main(int argc , char *argv[])
             if(sd > max_sd)   
                 max_sd = sd;   
         }   
-     
+        */
+
+        //socket descriptor  
+        sd = client_socket[sdTurn];
+             
+        //if valid socket descriptor then add to read list  
+        if(sd > 0)   
+            FD_SET( sd , &readfds);   
+             
+        //highest file descriptor number, need it for the select function  
+        if(sd > max_sd)   
+            max_sd = sd;   
+
         //wait for an activity on one of the sockets , timeout is NULL ,  
         //so wait indefinitely  
+        
+        //LISTEN TO THE CHILD SOCKET'S SDS INSTEAD OF READFDS (?) 
         activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);   
-       
+        //if(sdturn){
+        //   activity = select( 1, child socket sd, NULL, NULL, timeout time )
+        //}else{
+        //   activity = select( 1, otherchild sd, NULL, NULL, timeout time )
         if ((activity < 0) && (errno!=EINTR))   
         {   
-            printf("select error");   
+            printf("timed out"); 
+            return activity;
         }   
-             
+        //MASTER_SOCKET IS TOUCHED     
         //If something happened on the master socket ,  
         //then its an incoming connection  
         if (FD_ISSET(master_socket, &readfds))   
@@ -124,10 +153,10 @@ int main(int argc , char *argv[])
             }   
              
             //inform user of socket number - used in send and receive commands  
-            printf("New connection , socket fd is %d , ip is : %s , port : %d  \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));   
+            printf("New connection , sid is %d , ip is : %s , port : %d  \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));   
            
             //send new connection greeting message 
-            if( send(new_socket, message, strlen(message), 0) != int(strlen(message)) )   
+            if( send(new_socket, wMsg, strlen(wMsg), 0) != int(strlen(wMsg)) )   
             {   
                 perror("send");   
             }   
@@ -139,18 +168,18 @@ int main(int argc , char *argv[])
                 if( client_socket[i] == 0 )   
                 {   
                     client_socket[i] = new_socket;   
-                    printf("Adding to list of sockets as %d\n" , i);   
+                    printf("Adding to list of sockets in position %d\n" , i);   
                          
                     break;   
                 }   
             }   
         }   
-             
+        
+        //CHILD_SOCKET IS TOUCHED
         //else its some IO operation on some other socket 
         for (i = 0; i < max_clients; i++)   
         {   
             sd = client_socket[i];   
-            if ( sd == sdTurn || sdTurn == -1 ){     
             if (FD_ISSET( sd , &readfds))   
             {   
                 //Check if it was for closing , and also read the  
@@ -173,20 +202,37 @@ int main(int argc , char *argv[])
                     //set the string terminating NULL byte on the end  
                     //of the data read  
                     buffer[valread] = '\0';   
+                    
+                    /*
+                    take buffer and save it somewhere
+                    modify msg
+                    send modified msg
+                    
+                    */
+                    
+                    char oldBuffer[1025];
+                    strcpy(oldBuffer, buffer);
+                    strcpy(buffer, msg.dump().c_str());
+                    
                     cout << "Test Print: sid = "
                          << sd
+                         << " current sdTurn = "
+                         << sdTurn
                          << " : buffer = "
-                         << buffer
+                         << oldBuffer
+                         << " : msg = "
+                         << msg.dump(4)
                          << endl;
+                    
                     send(sd , buffer , strlen(buffer) , 0 );
-                    if ( sd == 4){
-                        sdTurn = 5;
+
+                    if ( sdTurn == 0){
+                        sdTurn++;
                     }
-                    else if ( sd == 5){
-                        sdTurn = 4;
+                    else if ( sdTurn == 1){
+                        sdTurn--;
                     }
                 }   
-            }
             }
         }   
     }   

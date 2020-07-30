@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     } //grab the IP address and port number 
     */
 
-    char *serverIp = "localhost"; int port = 54321; 
+    const char *serverIp = "localhost"; int port = 54321; 
     
     //create a message buffer 
     char msg[1500]; 
