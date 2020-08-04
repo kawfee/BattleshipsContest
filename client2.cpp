@@ -26,8 +26,8 @@ using json=nlohmann::json;
 
 int main(int argc, char *argv[]){
 
-    srand(getpid());
-    string clientID = to_string(rand()%1000);
+    //set random clientID
+    string clientID = "Client2";
 
     const char *serverIp = "localhost"; int port = 54321;
 
@@ -51,9 +51,9 @@ int main(int argc, char *argv[]){
     int status = connect(clientSd,
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0){
-        cout<<"Error connecting client to socket!"<<endl;
+        cout<<"Error connecting to socket!"<<endl;
     }else{
-    cout << "Connected client to the server!" << endl;
+    cout << "Connected to the server!" << endl;
     }
 
     int round=0;
@@ -61,8 +61,17 @@ int main(int argc, char *argv[]){
         round++;
 
         //read
+        cout << "Awaiting server response..." << endl;
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
         recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
+        if(!strcmp(buffer, "exit")) {
+            cout << "Server has quit the session" << endl;
+            break;
+        }
+        cout << "Server: " << buffer << endl;
+
+        //write
+        cout << "Client: ";
 
         string tempStr="";
         tempStr.append(buffer);
@@ -72,6 +81,8 @@ int main(int argc, char *argv[]){
 
         msg.at("client") = clientID;
         msg.at("count") = round;
+
+        //std::cout << "Testing JSON contents: " <<msg[0] << '\n';
 
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
@@ -83,7 +94,7 @@ int main(int argc, char *argv[]){
     }
 
     close(clientSd);
-    cout << "Connection closed for client " << clientID << endl;
+    cout << "Connection closed" << endl;
 
     return 0;
 }
