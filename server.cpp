@@ -12,6 +12,8 @@
 #include <cstring>
 
 #include "json.hpp"
+#include "subprocess.hpp"
+#include "defines.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -19,169 +21,184 @@
 
 using namespace std;
 using json = nlohmann::json;
+using namespace subprocess;
 
 void setupServer(int &max_clients, int (&client_socket)[30], int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen);
+void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int (&client_socket)[30], int &countConnected);
+void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &address, int &addrlen, json &msg, int &max_clients, int (&client_socket)[30], int &i, int &countConnected);
+void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &sdTurn, int &dConnect);
+void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]);
+void childSend(char (&buffer)[1500], int &sd, int &sdTurn);
+void messageHandler(json msg, string currentClient, char (&c1Board)[10][10] , char (&c2Board)[10][10]);
+void placeShip(char (&board)[10][10] , int row, int col);
 
 int main(int argc , char *argv[]){
-    //create the variables
+    //create the server variables
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
-        max_clients = 2 , activity, i , valread , sd;
-    int max_sd;
-    int sdTurn = 0;
+        max_clients=2 , activity, i , valread , sd, max_sd,
+        sdTurn=0, dConnect=0, countConnected=0;
     struct sockaddr_in address;
-
-    int dConnect = false;
-
     char buffer[1500];
-
+    string clientStr, currentClient;
     //set of socket descriptors
     fd_set readfds;
+    json msg = {
+        {"messageType", "placeShip"},
+        {"row", -1},
+        {"col", -1},
+        {"str", ""},
+        {"dir", HORIZONTAL},
+        {"length", 3},
+        {"client", "none"},
+        {"count", 0}
+    };
+    json clientResponse;
 
-    //base json object
-    json msg = { {"count", 0}, {"client", "none"} };
+    //create the game variables here
+    char c1Board[10][10];
+    char c2Board[10][10];
+
+    //populate the boards
+    for(int row=0;row<10;row++){
+        for(int col=0;col<10;col++){
+            c1Board[row][col] = WATER;
+            c2Board[row][col] = WATER;
+        }
+    }
 
     setupServer(max_clients, client_socket, master_socket, opt, address, i, addrlen);
 
+    auto c1 = Popen({"./client"});
+    auto c2 = Popen({"./client"});
+
     while(TRUE)
     {
-        //clear the socket set
-        FD_ZERO(&readfds);
+        //prepare the sockets for liftoff
+        prepSockets(readfds, master_socket, max_sd, sd, sdTurn, client_socket, countConnected);
 
-        //add master socket to set
-        FD_SET(master_socket, &readfds);
-        max_sd = master_socket;
-
-        //socket descriptor
         sd = client_socket[sdTurn];
-        std::cout << "The SD for this turn is: " << sd << '\n';
 
-        //if valid socket descriptor then add to read list
-        if(sd > 0)
-            FD_SET( sd , &readfds);
+        if (sdTurn == 0){
+            currentClient = "client1";
+        }
+        else{
+            currentClient = "client2";
+        }
 
-        //highest file descriptor number, need it for the select function
-        if(sd > max_sd)
-            max_sd = sd;
+        //send message
+        if(countConnected >= 2){
+            strcpy(buffer, msg.dump().c_str());
+            send(sd , buffer , strlen(buffer) , 0 );
+        }
 
-        //wait for an activity on one of the sockets , timeout is NULL ,
-        //so wait indefinitely
-
+        //wait at the sockets for a change,
+        //if it takes longer than timeval tv the process is killed.
         struct timeval tv = {0, 500000}; // Half a second
         activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
 
-        if ((activity < 0) && (errno!=EINTR))
+        cout << "Activity: " << activity << endl;
+
+        // Handles a timeout error from the above select statement
+        if ((activity <= 0) && (errno!=EINTR))
         {
-            printf("timed out");
+            if(sdTurn == 0){
+                cout << "SID " << client_socket[1] << " won!" << endl;
+            }else{
+                cout << "SID " << client_socket[0] << " won!" << endl;
+            }
+            //client_socket[0] and [1] are the two sd values
+            childDisconnect(client_socket[0], address, addrlen, client_socket, sdTurn, dConnect);
+            childDisconnect(client_socket[1], address, addrlen, client_socket, sdTurn, dConnect);
+
+            c1.kill();
+            c2.kill();
+
             return activity;
+            //return winner, kills, ... & game stats;
         }
+
+
         //MASTER_SOCKET IS TOUCHED
-        //If something happened on the master socket ,
-        //then its an incoming connection
-        if (FD_ISSET(master_socket, &readfds))
-        {
-            if ((new_socket = accept(master_socket,
-                    (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-            {
-                perror("accept");
-                exit(EXIT_FAILURE);
+        if (FD_ISSET(master_socket, &readfds)){
+            //this adds new connections to the client_socket array when master socket is modified/accessed
+            masterSocketTouched(new_socket, master_socket, address, addrlen, msg, max_clients, client_socket, i, countConnected);
+        }
+
+        //ACTIVE CHILD_SOCKET IS TOUCHED
+
+
+        if (FD_ISSET( sd , &readfds)){
+            //Check if it was for closing , and also read the
+            //incoming message
+            if ((valread = read( sd , buffer, 1499)) == 0 || dConnect !=0){
+                //get the details of the disconnected client and print them
+                childDisconnect(sd, address, addrlen, client_socket, sdTurn, dConnect);
             }
 
-            //inform user of socket number - used in send and receive commands
-            printf("New connection , sid is %d , ip is : %s , port : %d  \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+            //Echo back the message that came in
+            else{
+                //this else statement is where the data is processed for the game
+                childParse(clientStr, clientResponse, valread, buffer);
 
-            //send new connection greeting message
-            if( send(new_socket, msg.dump().c_str(), strlen(msg.dump().c_str()), 0) != int(strlen(msg.dump().c_str())) )
-            {
-                perror("send");
-            }
+                // Sets data to send to client
+                msg.at("client") = clientResponse.at("client");
+                msg.at("count") = clientResponse.at("count");
 
-            //add new socket to array of sockets
-            for (i = 0; i < max_clients; i++)
-            {
-                //if position is empty
-                if( client_socket[i] == 0 )
-                {
-                    client_socket[i] = new_socket;
-                    printf("Adding to list of sockets in position %d\n" , i);
+                messageHandler(msg, currentClient, c1Board, c2Board);
+
+                if(msg.at("count")>=50){ //kill the game at round 50
+                    //client_socket[0] and [1] are the two sd values
+                    childDisconnect(client_socket[0], address, addrlen, client_socket, sdTurn, dConnect);
+                    childDisconnect(client_socket[1], address, addrlen, client_socket, sdTurn, dConnect);
+
+                    dConnect = 2;
+                    cout << "dConnect is equal to: " << dConnect << endl;
+
+                    c1.kill();
+                    c2.kill();
+
+                    cout << "Clients killed successfully"
+                         << endl;
 
                     break;
                 }
-            }
-        }
 
-        //CHILD_SOCKET IS TOUCHED
-        //else its some IO operation on some other socket
-        for (i = 0; i < max_clients; i++)
-        {
-            sd = client_socket[i];
-            if (FD_ISSET( sd , &readfds))
-            {
-                //Check if it was for closing , and also read the
-                //incoming message
-                if ((valread = read( sd , buffer, 1499)) == 0 || dConnect !=0)
-                {
-                    //Somebody disconnected , get his details and print
-                    getpeername(sd , (struct sockaddr*)&address, (socklen_t*)&addrlen);
-                    printf("Client %d disconnected , ip %s , port %d \n" ,
-                          sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                strcpy(buffer, msg.dump().c_str());
+                // End of setting data
 
-                    //Close the socket and mark as 0 in list for reuse
-                    close( sd );
-                    client_socket[i] = 0;
-                    if ( sdTurn == 0){
-                        sdTurn=1;
+
+                //test print
+                cout << "Test Print: \nsid = "
+                     << sd
+                     << " \ncurrent sdTurn = "
+                     << sdTurn
+                     << " : \nbuffer = "
+                     << clientStr
+                     << " : \nmsg = \n"
+                     << msg.dump(4)
+                     << endl;
+
+                std::cout << "c1Board" << std::endl;
+                for(int row=0;row<10;row++){
+                    for(int col=0;col<10;col++){
+                        std::cout << c1Board[row][col];
                     }
-                    else if ( sdTurn == 1){
-                        sdTurn=0;
+                    cout << endl;
+                }
+                std::cout << "c2Board" << std::endl;
+                for(int row=0;row<10;row++){
+                    for(int col=0;col<10;col++){
+                        std::cout << c2Board[row][col];
                     }
-
-                    dConnect++;
+                    cout << endl;
                 }
 
-                //Echo back the message that came in
-                else
-                {
-                    //set the string terminating NULL byte on the end
-                    //of the data read
-                    buffer[valread] = '\0';
-
-                    /*
-                    take buffer and save it somewhere
-                    modify msg
-                    send modified msg
-
-                    */
-
-                    char oldBuffer[1500];
-                    strcpy(oldBuffer, buffer);
-                    string clientStr;
-                    clientStr.append(oldBuffer);
-                    json clientResponse = json::parse(clientStr);
-
-                    msg.at("client") = clientResponse.at("client");
-                    msg.at("count") = clientResponse.at("count");
-
-                    strcpy(buffer, msg.dump().c_str());
-
-                    cout << "Test Print: \nsid = "
-                         << sd
-                         << " \ncurrent sdTurn = "
-                         << sdTurn
-                         << " : \nbuffer = "
-                         << oldBuffer
-                         << " : \nmsg = \n"
-                         << msg.dump(4)
-                         << endl;
-
-                    send(sd , buffer , strlen(buffer) , 0 );
-
-                    if (sdTurn == 0){
-                        sdTurn=1;
-                    }
-                    else if (sdTurn == 1){
-                        sdTurn=0;
-                    }
+                if (sdTurn == 0){
+                    sdTurn=1;
+                }
+                else if (sdTurn == 1){
+                    sdTurn=0;
                 }
             }
         }
@@ -239,4 +256,110 @@ void setupServer(int &max_clients, int (&client_socket)[30], int &master_socket,
     //accept the incoming connection
     addrlen = sizeof(address);
     puts("Waiting for connections ...");
+}
+
+void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int (&client_socket)[30], int &countConnected){
+    //clear the socket set
+    FD_ZERO(&readfds);
+
+    //add master socket to set
+    FD_SET(master_socket, &readfds);
+    max_sd = master_socket;
+
+    //socket descriptor
+    if (countConnected >= 2){
+        sd = client_socket[sdTurn];
+        std::cout << "The SD for this turn is: " << sd << '\n';
+
+        //if valid socket descriptor then add to read list
+        if(sd > 0)
+            FD_SET( sd , &readfds);
+
+        //highest file descriptor number, need it for the select function
+        if(sd > max_sd)
+            max_sd = sd;
+    }
+}
+
+void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &address, int &addrlen, json &msg, int &max_clients, int (&client_socket)[30], int &i, int &countConnected){
+    if ((new_socket = accept(master_socket,
+        (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
+    {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+
+    //inform user of socket number - used in send and receive commands
+    printf("New connection , sid is %d , ip is : %s , port : %d  \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+
+
+    //add new socket to array of sockets
+    for (i = 0; i < max_clients; i++)
+    {
+        //if position is empty
+        if( client_socket[i] == 0 )
+        {
+            client_socket[i] = new_socket;
+            printf("Adding to list of sockets in position %d\n" , i);
+
+            break;
+        }
+    }
+
+    countConnected++;
+}
+
+void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &sdTurn, int &dConnect){
+    getpeername(sd , (struct sockaddr*)&address, (socklen_t*)&addrlen);
+    printf("Client %d disconnected , ip %s , port %d \n" ,
+          sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+
+    //Close the socket and mark as 0 in list for reuse
+    close( sd );
+    client_socket[sdTurn] = 0;
+    if ( sdTurn == 0){
+        sdTurn=1;
+    }
+    else if ( sdTurn == 1){
+        sdTurn=0;
+    }
+
+    dConnect++;
+}
+
+void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]){
+    //set the string terminating NULL byte on the end
+    //of the data read
+    buffer[valread] = '\0';
+
+    clientStr = "";
+    clientStr.append(buffer);
+    clientResponse = json::parse(clientStr);
+}
+
+void messageHandler(json msg, string currentClient, char (&c1Board)[10][10] , char (&c2Board)[10][10]){
+    if(currentClient=="client1"){
+        if(msg.at("messageType") == "placeShip"){
+            placeShip(c1Board, msg.at("row"), msg.at("col"));
+        }
+    }else if(currentClient=="client2"){
+        if(msg.at("messageType") == "placeShip"){
+            placeShip(c2Board, msg.at("row"), msg.at("col"));
+        }
+    }else{
+        cerr << "Invalid client input" << endl;
+        return;
+    }
+}
+
+void placeShip(char (&board)[10][10] , int row, int col){
+    board[row][col] = 'S';
+    std::cout << "This is placeShip: " << board[row][col] << std::endl;
+    std::cout << "This is board:" << std::endl;
+    for(int row=0;row<10;row++){
+        for(int col=0;col<10;col++){
+            std::cout << board[row][col];
+        }
+        cout << endl;
+    }
 }

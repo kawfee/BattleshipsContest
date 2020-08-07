@@ -15,4 +15,3 @@ controller: controller.cpp
 
 clean:
 	rm -f client client2 client_manual server controller
-

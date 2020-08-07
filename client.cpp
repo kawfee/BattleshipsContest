@@ -22,12 +22,11 @@
 using namespace std;
 using json=nlohmann::json;
 
+void messageHandler(json &msg, string &clientID, int &round);
+
 //Client side
-
 int main(int argc, char *argv[]){
-
-    srand(getpid());
-    string clientID = to_string(rand()%1000);
+    string clientID = to_string(getpid());
 
     const char *serverIp = "localhost"; int port = 54321;
 
@@ -58,10 +57,17 @@ int main(int argc, char *argv[]){
 
     int round=0;
     while(1){
+
+        if((round>24) && (getpid()%2==0)){
+            //usleep(900000000); // 250000
+            //find code to force a seg fault
+        }
+
         round++;
 
         //read
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
+
         recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
 
         string tempStr="";
@@ -70,8 +76,7 @@ int main(int argc, char *argv[]){
 
         json msg=json::parse(tempStr);
 
-        msg.at("client") = clientID;
-        msg.at("count") = round;
+        messageHandler(msg, clientID, round);
 
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
@@ -86,4 +91,15 @@ int main(int argc, char *argv[]){
     cout << "Connection closed for client " << clientID << endl;
 
     return 0;
+}
+
+void messageHandler(json &msg, string &clientID, int &round){
+    if(msg.at("messageType")=="placeShip"){
+        // placeShip();
+        msg.at("row") = 0;
+        msg.at("col") = 0;
+
+        msg.at("client") = clientID;
+        msg.at("count") = round;
+    }
 }
