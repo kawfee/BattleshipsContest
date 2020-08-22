@@ -11,11 +11,11 @@ using namespace std;
 
     // Shot related
     const char SHOT = '@';
-    const char MISS = '*';
+    const char MISS = 'O';
     const char DUPLICATE_SHOT  = '!';
     const char HIT  = 'X';
     const char KILL = 'K';
-    const char OPPONENT_SHOT = 'O';
+    const char OPPONENT_SHOT = '*';
     const char SHIP = 'S';
     const char WATER = '~';
     const char INVALID_SHOT = char(0);

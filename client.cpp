@@ -17,15 +17,22 @@
 #include <cstring>
 
 #include "json.hpp"
-
+#include "defines.h"
 
 using namespace std;
 using json=nlohmann::json;
 
-void messageHandler(json &msg, string &clientID, int &round);
+void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize);
+void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
+void placeShip(json &msg, char shipBoard[10][10], int boardSize);
+void shootShot(json &msg, char shotBoard[10][10], int boardSize);
+void oldPlaceShip(json &msg, int round);
+void oldShootShot(json &msg, int round);
 
-//Client side
+
+
 int main(int argc, char *argv[]){
+    srand(getpid());
     string clientID = to_string(getpid());
 
     const char *serverIp = "localhost"; int port = 54321;
@@ -55,14 +62,20 @@ int main(int argc, char *argv[]){
     cout << "Connected client to the server!" << endl;
     }
 
+    //declare variables for during the game
     int round=0;
-    while(1){
+    int boardSize=10;
+    char shipBoard[10][10];
+    char shotBoard[10][10];
 
-        if((round>24) && (getpid()%2==0)){
-            //usleep(900000000); // 250000
-            //find code to force a seg fault
+    //populate boards
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            shipBoard[row][col]=WATER;
+            shotBoard[row][col]=WATER;
         }
-
+    }
+    while(1){
         round++;
 
         //read
@@ -76,7 +89,7 @@ int main(int argc, char *argv[]){
 
         json msg=json::parse(tempStr);
 
-        messageHandler(msg, clientID, round);
+        messageHandler(msg, clientID, round, shipBoard, shotBoard, boardSize);
 
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
@@ -93,13 +106,80 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void messageHandler(json &msg, string &clientID, int &round){
-    if(msg.at("messageType")=="placeShip"){
-        // placeShip();
-        msg.at("row") = 0;
-        msg.at("col") = 0;
+void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize){
+    msg.at("client") = clientID;
+    msg.at("count") = round;
 
-        msg.at("client") = clientID;
-        msg.at("count") = round;
+    if(msg.at("messageType")=="placeShip"){
+        //oldPlaceShip(msg, round);
+        placeShip(msg, shipBoard, boardSize);
+
+    }else if(msg.at("messageType")=="shootShot"){
+        //oldShootShot(msg, round);
+        shootShot(msg, shotBoard, boardSize);
     }
+}
+
+void placeShip(json &msg, char shipBoard[10][10], int boardSize){
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            if(shipBoard[row][col]==WATER){
+                msg.at("row") = row;
+                msg.at("col") = col;
+                msg.at("dir") = HORIZONTAL;
+                for(int len=0;len<msg.at("length");len++){
+                    if(shipBoard[row][col]!=WATER){
+                        msg.at("dir") = VERTICAL;
+                        updateBoard(shipBoard, row, col, msg.at("length"), VERTICAL, SHIP);
+                        return;
+                    }
+                }
+                updateBoard(shipBoard, row, col, msg.at("length"), HORIZONTAL, SHIP);
+                return;
+            }
+        }
+    }
+}
+
+void shootShot(json &msg, char shotBoard[10][10], int boardSize){
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            if(shotBoard[row][col]==WATER){
+                msg.at("row") = row;
+                msg.at("col") = col;
+                updateBoard(shotBoard, row, col, 1, NONE, SHOT);
+                return;
+            }
+        }
+    }
+}
+
+void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
+    if(dir==HORIZONTAL){
+        for(int len=0;len<length;len++){
+            board[row][col+len]=newChar;
+        }
+    }else if(dir==VERTICAL){
+        for(int len=0;len<length;len++){
+            board[row+len][col]=newChar;
+        }
+    }else if(dir==NONE){
+        board[row][col]=newChar;
+    }
+}
+
+void oldPlaceShip(json &msg, int round){
+    msg.at("row") = round;
+    msg.at("col") = rand()%8;
+    int temp=1; //(rand()%2)+1;
+    if(temp==1){
+        msg.at("dir") = HORIZONTAL;
+    }else{
+        msg.at("dir") = VERTICAL;
+    }
+}
+
+void oldShootShot(json &msg, int round){
+    msg.at("row") = round;
+    msg.at("col") = rand()%8;
 }

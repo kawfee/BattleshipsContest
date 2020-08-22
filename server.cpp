@@ -23,24 +23,31 @@ using namespace std;
 using json = nlohmann::json;
 using namespace subprocess;
 
+
 void setupServer(int &max_clients, int (&client_socket)[30], int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen);
 void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int (&client_socket)[30], int &countConnected);
 void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &address, int &addrlen, json &msg, int &max_clients, int (&client_socket)[30], int &i, int &countConnected);
 void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &sdTurn, int &dConnect);
 void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]);
-void childSend(char (&buffer)[1500], int &sd, int &sdTurn);
-void messageHandler(json msg, string currentClient, char (&c1Board)[10][10] , char (&c2Board)[10][10]);
-void placeShip(char (&board)[10][10] , int row, int col);
+void messageHandler(json &msg, string &currentClient, json &clientResponse, char (&c1Board)[10][10] , char (&c2Board)[10][10] , int boardSize);
+bool placeShip(char board[10][10] , int boardSize, int row, int col, int length, Direction dir);
+bool shootShot(char board[10][10] , int boardSize, int row, int col);
 
+//runGame(10, "client", "client");
+//int runGame(int boardSize, string client1, string client2)
 int main(int argc , char *argv[]){
     //create the server variables
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
         max_clients=2 , activity, i , valread , sd, max_sd,
-        sdTurn=0, dConnect=0, countConnected=0;
+        sdTurn=0, dConnect=0, countConnected=0, totalGameRound=0;
     struct sockaddr_in address;
     char buffer[1500];
     string clientStr, currentClient;
+
+    //boolean value to decide whether or not to keep running the game.
+    bool cont = true;
+
     //set of socket descriptors
     fd_set readfds;
     json msg = {
@@ -48,7 +55,7 @@ int main(int argc , char *argv[]){
         {"row", -1},
         {"col", -1},
         {"str", ""},
-        {"dir", HORIZONTAL},
+        {"dir", NONE},
         {"length", 3},
         {"client", "none"},
         {"count", 0}
@@ -56,12 +63,19 @@ int main(int argc , char *argv[]){
     json clientResponse;
 
     //create the game variables here
+    int shipLengths[] = { 3,3,4,3,3,4 };
+    int boardSize = 10;
+    int numShips = boardSize-2;
+    if(numShips>6){
+        numShips=6;
+    }
     char c1Board[10][10];
     char c2Board[10][10];
-
+    json c1Ships[6];
+    json c2Ships[6];
     //populate the boards
-    for(int row=0;row<10;row++){
-        for(int col=0;col<10;col++){
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
             c1Board[row][col] = WATER;
             c2Board[row][col] = WATER;
         }
@@ -72,22 +86,22 @@ int main(int argc , char *argv[]){
     auto c1 = Popen({"./client"});
     auto c2 = Popen({"./client"});
 
-    while(TRUE)
-    {
+    while(TRUE){
         //prepare the sockets for liftoff
         prepSockets(readfds, master_socket, max_sd, sd, sdTurn, client_socket, countConnected);
 
         sd = client_socket[sdTurn];
 
-        if (sdTurn == 0){
-            currentClient = "client1";
-        }
-        else{
-            currentClient = "client2";
-        }
+        if (sdTurn == 0) currentClient = "client1";
+        else currentClient = "client2";
+
+        cout << "currentClient: " << currentClient << endl;
 
         //send message
         if(countConnected >= 2){
+            if(totalGameRound <= 6){
+                msg.at("length") = shipLengths[totalGameRound];
+            }
             strcpy(buffer, msg.dump().c_str());
             send(sd , buffer , strlen(buffer) , 0 );
         }
@@ -100,8 +114,8 @@ int main(int argc , char *argv[]){
         cout << "Activity: " << activity << endl;
 
         // Handles a timeout error from the above select statement
-        if ((activity <= 0) && (errno!=EINTR))
-        {
+        if ((activity <= 0) && (errno!=EINTR)){
+        // if ((activity <= 0) && (errno!=EINTR) || cont == false){
             if(sdTurn == 0){
                 cout << "SID " << client_socket[1] << " won!" << endl;
             }else{
@@ -131,7 +145,7 @@ int main(int argc , char *argv[]){
         if (FD_ISSET( sd , &readfds)){
             //Check if it was for closing , and also read the
             //incoming message
-            if ((valread = read( sd , buffer, 1499)) == 0 || dConnect !=0){
+            if ((valread = read( sd , buffer, 1499)) <= 0 || dConnect !=0){
                 //get the details of the disconnected client and print them
                 childDisconnect(sd, address, addrlen, client_socket, sdTurn, dConnect);
             }
@@ -141,28 +155,27 @@ int main(int argc , char *argv[]){
                 //this else statement is where the data is processed for the game
                 childParse(clientStr, clientResponse, valread, buffer);
 
-                // Sets data to send to client
-                msg.at("client") = clientResponse.at("client");
-                msg.at("count") = clientResponse.at("count");
-
-                messageHandler(msg, currentClient, c1Board, c2Board);
-
-                if(msg.at("count")>=50){ //kill the game at round 50
+                if(!cont){ //kill the game when cont is set to false.
                     //client_socket[0] and [1] are the two sd values
+
+                    c1.kill();
+                    c2.kill();
+
                     childDisconnect(client_socket[0], address, addrlen, client_socket, sdTurn, dConnect);
                     childDisconnect(client_socket[1], address, addrlen, client_socket, sdTurn, dConnect);
 
                     dConnect = 2;
                     cout << "dConnect is equal to: " << dConnect << endl;
 
-                    c1.kill();
-                    c2.kill();
 
                     cout << "Clients killed successfully"
                          << endl;
 
-                    break;
+                    return 0;
                 }
+
+                //sends the message to be processed
+                messageHandler(msg, currentClient, clientResponse, c1Board, c2Board, boardSize);
 
                 strcpy(buffer, msg.dump().c_str());
                 // End of setting data
@@ -180,15 +193,15 @@ int main(int argc , char *argv[]){
                      << endl;
 
                 std::cout << "c1Board" << std::endl;
-                for(int row=0;row<10;row++){
-                    for(int col=0;col<10;col++){
+                for(int row=0;row<boardSize;row++){
+                    for(int col=0;col<boardSize;col++){
                         std::cout << c1Board[row][col];
                     }
                     cout << endl;
                 }
                 std::cout << "c2Board" << std::endl;
-                for(int row=0;row<10;row++){
-                    for(int col=0;col<10;col++){
+                for(int row=0;row<boardSize;row++){
+                    for(int col=0;col<boardSize;col++){
                         std::cout << c2Board[row][col];
                     }
                     cout << endl;
@@ -200,6 +213,18 @@ int main(int argc , char *argv[]){
                 else if (sdTurn == 1){
                     sdTurn=0;
                 }
+
+                if(currentClient=="client2"){
+                    totalGameRound++;
+                }
+
+                if(totalGameRound>=8){ // prepare to end the game after round: 2
+                    cont = false;
+                }
+                else if(totalGameRound>=6) {
+                    msg.at("messageType") = "shootShot";
+                }
+
             }
         }
         cout << "dConnect is equal to: " << dConnect << endl;
@@ -316,7 +341,8 @@ void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_s
 
     //Close the socket and mark as 0 in list for reuse
     close( sd );
-    client_socket[sdTurn] = 0;
+
+    client_socket[sdTurn] = (int)0;
     if ( sdTurn == 0){
         sdTurn=1;
     }
@@ -337,29 +363,163 @@ void childParse(string &clientStr, json &clientResponse, int &valread, char (&bu
     clientResponse = json::parse(clientStr);
 }
 
-void messageHandler(json msg, string currentClient, char (&c1Board)[10][10] , char (&c2Board)[10][10]){
-    if(currentClient=="client1"){
-        if(msg.at("messageType") == "placeShip"){
-            placeShip(c1Board, msg.at("row"), msg.at("col"));
+void messageHandler(json &msg, string &currentClient, json &clientResponse, char (&c1Board)[10][10] , char (&c2Board)[10][10], int boardSize){
+    msg.at("client") = clientResponse.at("client");
+    msg.at("count") = clientResponse.at("count");
+
+    if(clientResponse.at("messageType") == "placeShip"){
+        msg.at("row") = clientResponse.at("row");
+        msg.at("col") = clientResponse.at("col");
+        msg.at("dir") = clientResponse.at("dir");
+
+        cout << "CurrentClient: " << currentClient << endl;
+        cout << "Message Direction: " << msg.at("dir") << endl;
+
+        if(currentClient=="client1"){
+            cout << "Got into client1 shipplacement" <<endl;
+            placeShip(c1Board, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"));
+        }else if(currentClient=="client2"){
+            cout << "Got into client2 shipplacement" <<endl;
+            placeShip(c2Board, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"));
+        }else{
+            cerr << "Invalid client" << endl;
         }
-    }else if(currentClient=="client2"){
-        if(msg.at("messageType") == "placeShip"){
-            placeShip(c2Board, msg.at("row"), msg.at("col"));
+    }else if(clientResponse.at("messageType") == "shootShot"){
+        msg.at("row") = clientResponse.at("row");
+        msg.at("col") = clientResponse.at("col");
+
+        cout << "You shot me ow: (row, col) " << msg.at("row") << " " << msg.at("col") << endl;
+
+        if(currentClient=="client1"){
+            cout << "Got into client1 shootShot" <<endl;
+            shootShot(c1Board , boardSize, msg.at("row"), msg.at("col") );
+        }else if(currentClient=="client2"){
+            cout << "Got into client2 shootShot" <<endl;
+            shootShot(c2Board , boardSize, msg.at("row"), msg.at("col") );
+        }else{
+            cerr << "Invalid client" << endl;
         }
+
     }else{
-        cerr << "Invalid client input" << endl;
+        cerr << "Invalid message type" << endl;
         return;
     }
 }
 
-void placeShip(char (&board)[10][10] , int row, int col){
-    board[row][col] = 'S';
-    std::cout << "This is placeShip: " << board[row][col] << std::endl;
-    std::cout << "This is board:" << std::endl;
-    for(int row=0;row<10;row++){
-        for(int col=0;col<10;col++){
-            std::cout << board[row][col];
+//returns false if ship fails at placing
+bool placeShip(char board[10][10] , int boardSize, int row, int col, int length, Direction dir){
+    std::cout << "Ship Stuff: (len, dir) " << length << " " << dir << std::endl;
+    if( (row+length>boardSize || col+length>boardSize) || (row<0 || col<0) ){
+        cout << "Ship placement error: out of bounds" << endl;
+        return false;
+    }
+    if(dir==VERTICAL){
+        cout << "Direction is VERTICAL" << endl;
+    }else if(dir==HORIZONTAL){
+        cout << "Direction is HORIZONTAL" << endl;
+    }else{
+        cout << "Direction is WACC" << endl;
+        return false;
+    }
+    if(dir==HORIZONTAL){
+        for(int len=0;len<length;len++){
+            cout << "HORIZONTAL check space: " << "row, " << row << " col, " << (col+len) << " Spot, " << board[row][col+len] << endl;
+            if(board[row][col+len]!=WATER){
+                cout << "Ship placement error: HORIZONTAL" << endl;
+                board[row][col+len] = 'E';
+                return false;
+            }
+            board[row][col+len] = SHIP;
         }
-        cout << endl;
+    }else if(dir==VERTICAL){
+        for(int len=0;len<length;len++){
+            cout << "VERTICAL check space: "  << "row, " << (row+len) << " col, " << col << " Spot, " << board[row+len][col] << endl;
+            if(board[row+len][col]!=WATER){
+                cout << "Ship placement error: VERTICAL" << endl;
+                board[row+len][col] = 'E';
+                return false;
+            }
+            board[row+len][col] = SHIP;
+        }
+    }else{
+        cout << "I am sorry my friend, but something has gone horribly wrong. It would be best for you to both repent and call an exorcist immediately." << endl;
+        return false;
+    }
+
+    cout << "Got to end of placeShip" << endl;
+    return true;
+}
+
+/* oldBattleshipsCode--placeShips
+const int NumShips = 6;
+string shipNames[NumShips]  = { "Submarine", "Destroyer", "Aircraft Carrier", "Destroyer 2", "Submarine 2", "Aircraft Carrier 2" };
+int shipLengths[NumShips] = { 3,3,4,3,3,4 };
+int maxShips = boardSize-2;
+if( maxShips > NumShips ) {
+    maxShips = NumShips;
+}
+for( int i=0; i<maxShips; i++ ) {
+    Message loc = player->placeShip( shipLengths[i] );
+    bool placedOk = placingBoard->placeShip( loc.getRow(), loc.getCol(), shipLengths[i], loc.getDirection() );
+    if( ! placedOk ) {
+    cerr << "Error: couldn't place "<<shipNames[i]<<" (length "<<shipLengths[i]<<")"<<endl;
+    return false;
+}
+board->placeShip(shipLengths[i]);
+}
+
+// All ships apparently placed ok.
+return true;
+*/
+
+bool shootShot(char board[10][10] , int boardSize, int row, int col){
+    if( (row>=boardSize || col>=boardSize) || (row<0 || col<0) ){
+        cout << "Shot out of bounds" << endl;
+        return false;
+    }
+    if(board[row][col]==WATER){
+        board[row][col]=MISS;
+    }else if(board[row][col]==SHIP){
+        board[row][col]=HIT;
+    }else if(board[row][col]==HIT || board[row][col]==KILL){
+        board[row][col]=DUPLICATE_SHOT;
+        return false;
+    }
+
+    return true;
+}
+
+/* return whether or not a ship has been killed
+bool checkLiveShips(){
+    for(int i=0; i<numShips;i++){
+        for(int len=0;len<length;
     }
 }
+*/
+
+/* getClientName
+void getClientName(string (&client_names)[2], int &sd){
+    json dummyMessage = {"messageType", "getName"};
+
+    //send
+    char buffer[1500]
+    strcpy(buffer, dummyMessage.dump().c_str());
+    send(sd , buffer , strlen(buffer) , 0 );
+    //read
+
+    struct timeval tv = {0, 500000}; // Half a second
+    activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
+
+    cout << "Activity: " << activity << endl;
+
+    read( sd , tempBuffer, 1499));
+    //set array
+}
+*/
+
+/* base game idea
+    if (rounds < countships):
+        askforship()
+    else():
+        shootShot()
+*/
