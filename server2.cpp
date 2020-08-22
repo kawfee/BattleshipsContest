@@ -125,7 +125,7 @@ int main(int argc , char *argv[]){
             if p1==true and p2==false:
                 killRemaining(p1Result);
         */
-        if(totalGameRound < 6){
+        if(totalGameRound <= 6){
             p1Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[0],
                     countConnected, msg, shipLengths, buffer, activity,
                     address, addrlen, client_socket, dConnect, c1,
@@ -145,7 +145,7 @@ int main(int argc , char *argv[]){
                     valread, clientStr, clientResponse, "client1",
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
-            cout << "checkLiveShips == " << checkLiveShips(numShips, c1Ships, msg, c1Board) << endl;
+            checkLiveShips(numShips, c1Ships, msg, c1Board);
             /*
                 if( checkKilledShip(...) == True ) {
                 performAction("shipKilled", ...);
@@ -157,13 +157,13 @@ int main(int argc , char *argv[]){
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
-            cout << "checkLiveShips == " << checkLiveShips(numShips, c2Ships, msg, c2Board) << endl;
+            checkLiveShips(numShips, c2Ships, msg, c2Board);
         }
         // for the sd for performAction, pass client_socket[0] and client_socket[1] seperately
 
         //checkShips(c1Ships, c2Ships);
 
-        if(totalGameRound >= 8){
+        if(totalGameRound >= 13){
             c1.kill();
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
@@ -392,7 +392,10 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
 
     // send message
     msg.at("messageType") = messageType;
-    msg.at("length") = shipLengths[totalGameRound];
+    if(messageType == "placeShip"){
+        cout <<  "totalGameRound: " << totalGameRound << endl;
+        msg.at("length") = shipLengths[totalGameRound-1];
+    }
     strcpy(buffer, msg.dump().c_str());
     send(sd , buffer , strlen(buffer) , 0 );
 
@@ -406,9 +409,9 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
     // Handles a timeout error from the above select statement
     if ((activity <= 0) && (errno!=EINTR)){
         //client_socket[0] and [1] are the two sd values
-        childDisconnect(sd, address, addrlen, client_socket, dConnect);
-
         c.kill();
+        printf("Child disconnected in activity\n");
+        childDisconnect(sd, address, addrlen, client_socket, dConnect);
 
         return false;
     }
@@ -416,6 +419,8 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
     if(FD_ISSET(sd, &readfds)){
         if ((valread = read( sd , buffer, 1499)) <= 0 || dConnect !=0){
             //get the details of the disconnected client and print them
+            c.kill();
+            printf("Child disconnected in valread\n");
             childDisconnect(sd, address, addrlen, client_socket, dConnect);
         }else{
             //this else statement is where the data is processed for the game
@@ -437,7 +442,12 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     c1Ships[totalGameRound-1]=clientResponse;
                     placeShip(c1Board, c1ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c1Ships);
                 }else if(messageType=="shootShot"){
-                    shootShot(c1Board, boardSize, msg.at("row"), msg.at("col"));
+                    cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
+                    int tempRow = msg.at("row");
+                    //cout << "Hello there" << endl;
+                    int tempCol = msg.at("col");
+                    //cout << "Hello there but again" << endl;
+                    shootShot(c1Board, boardSize, tempRow, tempCol);
                 }
             }else if(currentClient=="client2"){
                 cout << "Got into client2" <<endl;
@@ -445,13 +455,16 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     c2Ships[totalGameRound-1]=clientResponse;
                     placeShip(c2Board, c2ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c2Ships);
                 }else if(messageType=="shootShot"){
-                    shootShot(c2Board, boardSize, msg.at("row"), msg.at("col"));
+                    cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
+                    int tempRow = msg.at("row");
+                    //cout << "Hello there" << endl;
+                    int tempCol = msg.at("col");
+                    //cout << "Hello there but again" << endl;
+                    shootShot(c2Board, boardSize, tempRow, tempCol);
                 }
             }
 
-            if(currentClient == "client2"){
-                printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
-            }
+            printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
 
         }//FD_ISSET
     }
@@ -486,7 +499,7 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
         for(int len=0;len<length;len++){
             cout << "VERTICAL check space: "  << "row, " << (row+len) << " col, " << col << " Spot, " << board[row+len][col] << endl;
             if(board[row+len][col]!=WATER){
-                cout << "Ship placement error: VERTICAL" << endl;
+                cerr << "Ship placement error: VERTICAL" << endl;
                 board[row+len][col] = 'E';
                 return false;
             }
@@ -494,7 +507,7 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
             shipBoard[row+len][col] = SHIP;
         }
     }else{
-        cout << "I am sorry my friend, but something has gone horribly wrong. It would be best for you to both repent and call an exorcist immediately." << endl;
+        cerr << "Dir error: NONE is not valid" << endl;
         return false;
     }
 
@@ -509,6 +522,7 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
     return true;
 }
 bool shootShot(char board[10][10], int boardSize, int row, int col){
+    printf("Got into shootShot\n");
     if( (row>=boardSize || col>=boardSize) || (row<0 || col<0) ){
         cout << "Shot out of bounds" << endl;
         return false;
@@ -521,37 +535,62 @@ bool shootShot(char board[10][10], int boardSize, int row, int col){
         board[row][col]=DUPLICATE_SHOT;
         return false;
     }
-
+    printf("Finished shootShot\n");
     return true;
 }
-
-
-
 bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][10]){
+    // Make this function return an integer and have it return -1 if all ships are alive,
+    //but if a ship is dead return the index of that ship and put that into a variable at function call.
+
+    printf("Got into checkLiveShips\n");
+    cout << "Message: " << msg << endl;
     //numShips, board[][], msg
+    bool allHit = true;
     for(int i=0; i<numShips; i++){
-        bool allHit = true;
-        for(int len=0;len<ships[i].at("length") && allHit; len++){
-            if(ships[i].at("dir")==VERTICAL){
-                if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT){
-                    allHit = false;
-                }
-            }else if(ships[i].at("dir")==HORIZONTAL){
-                if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT){
-                    allHit = false;
-                    break;
+        if(ships[i].at("messageType")!="shipDead"){
+            printf("Top of main for loop\n");
+            cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
+            allHit = true;
+            for(int len=0;len<ships[i].at("length") && allHit; len++){
+                cout << "Top of checker for loop: " << len << endl;
+                if(ships[i].at("dir")==VERTICAL){
+                    if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT){
+                        allHit = false;
+                        break;
+                    }
+                }else if(ships[i].at("dir")==HORIZONTAL){
+                    if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT){
+                        allHit = false;
+                        break;
+                    }
                 }
             }
         }
 
+        printf("Reached outside allTrue checker\n");
         if(allHit==true){
-            msg=ships[i];
+            for(int len=0;len<ships[i].at("length");len++){
+                if(ships[i].at("dir")==VERTICAL){
+                    board[int(ships[i].at("row"))+len][int(ships[i].at("col"))]=KILL;
+                }else if(ships[i].at("dir")==HORIZONTAL){
+                    board[int(ships[i].at("row"))][int(ships[i].at("col"))+len]=KILL;
+                }
+            }
+            printf("Reached inside allTrue checker\n");
+            msg.at("row")=ships[i].at("row");
+            msg.at("col")=ships[i].at("col");
+            msg.at("dir")=ships[i].at("dir");
+            msg.at("length")=ships[i].at("length");
+
+            ships[i].at("messageType")="shipDead";
             msg.at("messageType")="shipDead";
-            printf("THE SHIP IS GOING DOWN AHHHHHHHHHHH!");
+
+            printf("A ship has been sunk.\n");
             return true;
         }
-        
+
     }
+    printf("Finished checkLiveShips\n");
     return false;
 }
 

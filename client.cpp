@@ -131,10 +131,12 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
                     if(shipBoard[row][col]!=WATER){
                         msg.at("dir") = VERTICAL;
                         updateBoard(shipBoard, row, col, msg.at("length"), VERTICAL, SHIP);
+                        printf("placed ship in client----------------------------------------------------------------");
                         return;
                     }
                 }
                 updateBoard(shipBoard, row, col, msg.at("length"), HORIZONTAL, SHIP);
+                printf("placed ship in client----------------------------------------------------------------");
                 return;
             }
         }
