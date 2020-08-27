@@ -547,22 +547,20 @@ bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][1
     //numShips, board[][], msg
     bool allHit = true;
     for(int i=0; i<numShips; i++){
-        if(ships[i].at("messageType")!="shipDead"){
-            printf("Top of main for loop\n");
-            cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
-            allHit = true;
-            for(int len=0;len<ships[i].at("length") && allHit; len++){
-                cout << "Top of checker for loop: " << len << endl;
-                if(ships[i].at("dir")==VERTICAL){
-                    if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT){
-                        allHit = false;
-                        break;
-                    }
-                }else if(ships[i].at("dir")==HORIZONTAL){
-                    if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT){
-                        allHit = false;
-                        break;
-                    }
+        printf("Top of main for loop\n");
+        cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
+        allHit = true;
+        for(int len=0;len<ships[i].at("length") && allHit; len++){
+            cout << "Top of checker for loop: " << len << endl;
+            if(ships[i].at("dir")==VERTICAL){
+                if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT){
+                    allHit = false;
+                    break;
+                }
+            }else if(ships[i].at("dir")==HORIZONTAL){
+                if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT){
+                    allHit = false;
+                    break;
                 }
             }
         }
@@ -587,9 +585,9 @@ bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][1
 
             printf("A ship has been sunk.\n");
             return true;
-        }
+        }//end allHit if
 
-    }
+    }//end for loop
     printf("Finished checkLiveShips\n");
     return false;
 }

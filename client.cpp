@@ -26,8 +26,6 @@ void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
-void oldPlaceShip(json &msg, int round);
-void oldShootShot(json &msg, int round);
 
 
 
@@ -111,12 +109,11 @@ void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][
     msg.at("count") = round;
 
     if(msg.at("messageType")=="placeShip"){
-        //oldPlaceShip(msg, round);
         placeShip(msg, shipBoard, boardSize);
-
     }else if(msg.at("messageType")=="shootShot"){
-        //oldShootShot(msg, round);
         shootShot(msg, shotBoard, boardSize);
+    }else if(msg.at("messageType")=="shipDead"){
+        //shipDied(msg, shotBoard, boardSize);
     }
 }
 
@@ -131,12 +128,10 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
                     if(shipBoard[row][col]!=WATER){
                         msg.at("dir") = VERTICAL;
                         updateBoard(shipBoard, row, col, msg.at("length"), VERTICAL, SHIP);
-                        printf("placed ship in client----------------------------------------------------------------");
                         return;
                     }
                 }
                 updateBoard(shipBoard, row, col, msg.at("length"), HORIZONTAL, SHIP);
-                printf("placed ship in client----------------------------------------------------------------");
                 return;
             }
         }
@@ -168,20 +163,4 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
     }else if(dir==NONE){
         board[row][col]=newChar;
     }
-}
-
-void oldPlaceShip(json &msg, int round){
-    msg.at("row") = round;
-    msg.at("col") = rand()%8;
-    int temp=1; //(rand()%2)+1;
-    if(temp==1){
-        msg.at("dir") = HORIZONTAL;
-    }else{
-        msg.at("dir") = VERTICAL;
-    }
-}
-
-void oldShootShot(json &msg, int round){
-    msg.at("row") = round;
-    msg.at("col") = rand()%8;
 }
