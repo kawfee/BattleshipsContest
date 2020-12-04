@@ -1,17 +1,17 @@
 /*
-Authors: Joey Gorski, Matthew Bouch
-Battleships Server
+    Authors: Joey Gorski, Matthew Bouch
+    Battleships Server
 
-Used resources:
-Code help for using and seeting up sockets
-    https://simpledevcode.wordpress.com/2016/06/16/client-server-chat-in-c-using-sockets/
-    https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+    Used resources:
+    Code help for using and seeting up sockets
+        https://simpledevcode.wordpress.com/2016/06/16/client-server-chat-in-c-using-sockets/
+        https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 
-Github for json library:
-    https://github.com/nlohmann/json
+    Github for json library:
+        https://github.com/nlohmann/json
 
-Github for subprocess library:
-    https://github.com/arun11299/cpp-subprocess
+    Github for subprocess library:
+        https://github.com/arun11299/cpp-subprocess
 */
 
 
@@ -41,6 +41,8 @@ using json = nlohmann::json;
 using namespace subprocess;
 
 
+//int runGame(int numGames, string clientNameOne, string clientNameTwo);
+
 void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen);
 void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int &countConnected);
 int masterSocketConnection(fd_set &readfds, int &master_socket, int &max_sd, int &activity, int &new_socket, sockaddr_in &address,
@@ -62,11 +64,11 @@ bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][1
 
 
 
-
 //runGame(10, "client", "client");
-//int runGame(int boardSize, string client1, string client2)
-int main(int argc , char *argv[]){
 
+//int runGame(int boardSize, string client1, string client2)
+int runGame(int numGames, string clientNameOne, string clientNameTwo){
+    
     //create the server variables
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
@@ -120,8 +122,8 @@ int main(int argc , char *argv[]){
 
     setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
 
-    auto c1 = Popen({"./client"});
-    auto c2 = Popen({"./client"});
+    auto c1 = Popen({"./"+clientNameOne});
+    auto c2 = Popen({"./"+clientNameTwo});
 
     while(TRUE){
         if(countConnected < 2){
@@ -134,23 +136,23 @@ int main(int argc , char *argv[]){
                         max_clients, client_socket, i, countConnected);
         }
 
-        /* plan for the future
-            p1Result = placeShip();
-            p2Result = placeShip();
-            if p1 and p2 == false -1 ...:
-                both lose
-            if p1==true and p2==false:
-                killRemaining(p1Result);
-        */
+        // plan for the future
+        //     p1Result = placeShip();
+        //     p2Result = placeShip();
+        //     if p1 and p2 == false -1 ...:
+        //         both lose
+        //     if p1==true and p2==false:
+        //         killRemaining(p1Result);
+        
 
-        /* Note:
-        -Logic that deals with either placing a ship or shooting a shot depending on game round through
-        the use of the performAction function which does both a write and a read over our sockets.
+        // Note:
+        //     -Logic that deals with either placing a ship or shooting a shot depending on game round through
+        //     the use of the performAction function which does both a write and a read over our sockets.
 
-        -The first string in performAction makes the decision for performAction of what action to take.
+        //     -The first string in performAction makes the decision for performAction of what action to take.
 
-        -checkLiveShips is suspect in its workability--give it a once-over before starting to work on the rest.
-        */
+        //     -checkLiveShips is suspect in its workability--give it a once-over before starting to work on the rest.
+        
         if(totalGameRound <= 6){
             p1Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[0],
                     countConnected, msg, shipLengths, buffer, activity,
@@ -164,7 +166,7 @@ int main(int argc , char *argv[]){
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
-            }else{
+        }else{
             p1Result = performAction("shootShot", readfds, master_socket, max_sd, client_socket[0],
                     countConnected, msg, shipLengths, buffer, activity,
                     address, addrlen, client_socket, dConnect, c1,
@@ -172,11 +174,11 @@ int main(int argc , char *argv[]){
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
             checkLiveShips(numShips, c1Ships, msg, c1Board);
-            /*
-                if( checkKilledShip(...) == True ) {
-                performAction("shipKilled", ...);
-            }
-            */
+
+            // if( checkKilledShip(...) == True ) {
+            //     performAction("shipKilled", ...);
+            // }
+                
             p2Result = performAction("shootShot", readfds, master_socket, max_sd, client_socket[1],
                 countConnected, msg, shipLengths, buffer, activity,
                 address, addrlen, client_socket, dConnect, c2,
@@ -207,7 +209,6 @@ int main(int argc , char *argv[]){
 
     return 0;
 }
-
 
 
 

@@ -2,19 +2,24 @@
 #include <iostream>
 #include "subprocess.hpp"
 #include <unistd.h>
+#include "server.cpp"
+#include <string.h>
 
 using namespace std;
 using namespace subprocess;
 
 int main(){
 
-    auto p1 = Popen({"./client"});
-    auto p2 = Popen({"./client"});
-    usleep(9000);
+    /*
+        make a list of all AI executable files
+        call runGame() for those files and do tourney cr-arbage
+    */
+    
+    string clientNameOne = "client";
+    string clientNameTwo = "client";
 
-    // TODO: killing only affects one of the processes.
-    p1.kill();
-    p2.kill();
+    runGame(10, clientNameOne, clientNameTwo);
+    
 
     return 0;
 }

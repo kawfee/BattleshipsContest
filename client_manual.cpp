@@ -21,10 +21,9 @@ int main(int argc, char *argv[])
     //we need 2 things: ip address and port number, in that order
     
     /*
-    if(argc != 3)
-    {
-        cerr << "Usage: ip_address port" << endl; exit(0); 
-    } //grab the IP address and port number 
+        if(argc != 3){
+            cerr << "Usage: ip_address port" << endl; exit(0); 
+        } //grab the IP address and port number 
     */
 
     const char *serverIp = "localhost"; int port = 54321; 
