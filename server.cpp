@@ -3,7 +3,7 @@
     Battleships Server
 
     Used resources:
-    Code help for using and seeting up sockets
+    Code help for using and setting up sockets
         https://simpledevcode.wordpress.com/2016/06/16/client-server-chat-in-c-using-sockets/
         https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 
