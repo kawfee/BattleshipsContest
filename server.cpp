@@ -122,8 +122,8 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
 
     setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
 
-    auto c1 = Popen({"./"+clientNameOne});
-    auto c2 = Popen({"./"+clientNameTwo});
+    auto c1 = Popen({"./client_Ais/"+clientNameOne});
+    auto c2 = Popen({"./client_Ais/"+clientNameTwo});
 
     while(TRUE){
         if(countConnected < 2){
