@@ -41,7 +41,6 @@ using json = nlohmann::json;
 using namespace subprocess;
 
 
-//int runGame(int numGames, string clientNameOne, string clientNameTwo);
 
 void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen);
 void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int &countConnected);
@@ -59,8 +58,8 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             json (&c1Ships)[6], json (&c2Ships)[6]);
 bool placeShip(char board[10][10] , char shipBoard[10][10], int boardSize, int row, int col, int length, Direction dir, json &msg, json (&ships)[6]);
 bool shootShot(char board[10][10] , int boardSize, int row, int col);
-bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][10]);
-
+int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
+int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
 
 
 
@@ -151,7 +150,7 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
 
         //     -The first string in performAction makes the decision for performAction of what action to take.
 
-        //     -checkLiveShips is suspect in its workability--give it a once-over before starting to work on the rest.
+        //     -findDeadShip is suspect in its workability--give it a once-over before starting to work on the rest.
         
         if(totalGameRound <= 6){
             p1Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[0],
@@ -173,7 +172,7 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                     valread, clientStr, clientResponse, "client1",
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
-            checkLiveShips(numShips, c1Ships, msg, c1Board);
+            findDeadShip(numShips, c1Ships, msg, c1Board);
 
             // if( checkKilledShip(...) == True ) {
             //     performAction("shipKilled", ...);
@@ -185,14 +184,52 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
-            checkLiveShips(numShips, c2Ships, msg, c2Board);
+            findDeadShip(numShips, c2Ships, msg, c2Board);
         }
         // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
 
-        //checkShips(c1Ships, c2Ships);
+        //handle error checking one of the ais died or times out -- use p1Result & p2Result
+        if(!p1Result && !p2Result){
+            // return no winner
+            cout << "TIE!" << endl;
+            return 1;
+        }
+        else if(p1Result && !p2Result){
+            // return p1 as winner
+            cout << "p1 WINS!" << endl;
+            return 1;
+        }
+        else if(!p1Result && p2Result){
+            // return p2 as winner
+            cout << "p2 WINS!" << endl;
+            return 1;
+        }
 
-        //this is NOT the final number of rounds to be played--this is just a testing number.
-        if(totalGameRound >= 13){
+        if(totalGameRound>=6){
+            int gameStatus = gameOver(c1Ships, c2Ships);
+
+            if(gameStatus>=0){
+                // perform game over logic
+                // return struct with data
+                if(gameStatus==0){
+                    cout << "TIE!" << endl;
+                }else if(gameStatus==1){
+                    cout << "PLAYER 1 WINS!" << endl;
+                }else if(gameStatus==2){
+                    cout << "PLAYER 2 WINS!" << endl;
+                }
+
+                c1.kill();
+                c2.kill();
+                childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
+                childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
+
+                return 1;
+            } 
+        }
+        
+        //this is NOT the final number of rounds to be played--this is just a testing number. was at 13 for low turn count
+        if(totalGameRound >= 80){
             c1.kill();
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
@@ -584,15 +621,15 @@ bool shootShot(char board[10][10], int boardSize, int row, int col){
     return true;
 }
 
-//checkLiveShips is WIP
-bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][10]){
+//findDeadShip is WIP
+int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]){
     //TODO: Make this function return an integer and have it return -1 if all ships are alive,
     //but if a ship is dead return the index of that ship and put that into a variable at function call.
 
-    printf("Got into checkLiveShips\n");
+    printf("Got into findDeadShip\n");
     cout << "Message: " << msg << endl;
     //numShips, board[][], msg
-    bool allHit = true;
+    bool allHit;
     for(int i=0; i<numShips; i++){
         printf("Top of main for loop\n");
         cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
@@ -631,36 +668,48 @@ bool checkLiveShips(int &numShips, json (&ships)[6], json &msg, char board[10][1
             msg.at("messageType")="shipDead";
 
             printf("A ship has been sunk.\n");
-            return true;
+            return i;
         }//end allHit if
 
     }//end for loop
-    printf("Finished checkLiveShips\n");
-    return false;
+    printf("Finished findDeadShip\n");
+    return -1;
 }
 
-/* getClientName
-void getClientName(string (&client_names)[2], int &sd){
-    json dummyMessage = {"messageType", "getName"};
+int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
+    //0 is tie, -1 game is playing/no winners, 1 is p1 wins, 2 is p2 wins
+    bool c1Ships_areDead=true, c2Ships_areDead = true;
 
-    //send
-    char buffer[1500]
-    strcpy(buffer, dummyMessage.dump().c_str());
-    send(sd , buffer , strlen(buffer) , 0 );
-    //read
+    for(int i=0;i<6;i++){
+        if(c1Ships[i].at("messageType")!="shipDead"){
+            c1Ships_areDead=false;
+        }
+    }
+    for(int i=0;i<6;i++){
+        if(c2Ships[i].at("messageType")!="shipDead"){
+            c2Ships_areDead=false;
+        }
+    }
 
-    struct timeval tv = {0, 500000}; // Half a second
-    activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
-
-    cout << "Activity: " << activity << endl;
-
-    read( sd , tempBuffer, 1499));
-    //set array
+    if(c1Ships_areDead && c2Ships_areDead){
+        return 0;
+    }
+    else if(!c1Ships_areDead && c2Ships_areDead){
+        return 1;
+    }
+    else if(c1Ships_areDead && !c2Ships_areDead){
+        return 2;
+    }
+    else{
+        return -1;
+    }
 }
-*/
-/* base game idea
-    if (rounds < countships):
-        askforship()
-    else():
-        shootShot()
+
+/*
+    bool gameOver(){
+        allDeadp1 = true
+        for(ship in c1Ships):
+            if ship != dead:
+                allDeadp1 = false
+    }
 */
