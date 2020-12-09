@@ -26,6 +26,7 @@ void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
+void shotReturned(json &msg);
 
 
 
@@ -79,13 +80,31 @@ int main(int argc, char *argv[]){
         //read
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
+        //buffer[0] = char(0);
+
         recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
 
         string tempStr="";
         tempStr.append(buffer);
         //strcpy(tempStr, buffer);
 
+        /*  
+            //set the string terminating NULL byte on the end
+            //of the data read
+            buffer[valread] = '\0';
+
+            clientStr = "";
+            clientStr.append(buffer);
+            clientResponse = json::parse(clientStr);
+        */
+
+        // check if this is error loc.
+        cout << "CHECK LOCATION OF ERROR" << endl;
+        cout << "tempStr: " << tempStr << endl << endl;
+        
         json msg=json::parse(tempStr);
+        
+        cout << "msg: " << msg << endl;
 
         messageHandler(msg, clientID, round, shipBoard, shotBoard, boardSize);
 
@@ -94,8 +113,12 @@ int main(int argc, char *argv[]){
         if( msg.dump().length()+1 > 1500 ){
             cout << "UNSUPPORTED LENGTH REACHED BY: msg" << endl;
         }
-        strcpy(buffer, msg.dump().c_str());
-        send(clientSd, (char*)&buffer, strlen(buffer), 0);
+
+        // add or(s) here if you want other messageTypes to not send data back to server
+        if(msg.at("messageType") != "shotReturn"){
+            strcpy(buffer, msg.dump().c_str());
+            send(clientSd, (char*)&buffer, strlen(buffer), 0);
+        }
     }
 
     close(clientSd);
@@ -105,15 +128,21 @@ int main(int argc, char *argv[]){
 }
 
 void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize){
-    msg.at("client") = clientID;
-    msg.at("count") = round;
 
     if(msg.at("messageType")=="placeShip"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         placeShip(msg, shipBoard, boardSize);
     }else if(msg.at("messageType")=="shootShot"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         shootShot(msg, shotBoard, boardSize);
     }else if(msg.at("messageType")=="shipDead"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         //shipDied(msg, shotBoard, boardSize);
+    }else if(msg.at("messageType")=="shotReturn"){
+        shotReturned(msg);
     }
 }
 
@@ -163,4 +192,10 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
     }else if(dir==NONE){
         board[row][col]=newChar;
     }
+}
+
+
+void shotReturned(json &msg){
+    cout << "Shot Return Value: " << msg.at("str") << endl;
+    // do something
 }

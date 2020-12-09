@@ -37,9 +37,8 @@ int main(){
         make a list of all AI executable files
         call runGame() for those files and do tourney cr-arbage
     */
-    int i;
     Player players[playerCount];
-    i = system("ls ./client_Ais > temp.txt");
+    system("ls ./client_Ais > temp.txt");
     int size = 0;
     string line;
     ifstream myfile ("temp.txt");
@@ -91,17 +90,19 @@ int main(){
             -double elim/triple elim
     */
 
-    /* for(int i = 0; i < size; i++){
-        for(int j = i + 1; j < size; j++){
-            cout << players[i].name << " VS " << players[j].name << endl;
-            //have runGame return the struct that we built at the top
-            //runGame(500, players[i].name, players[j].name);
-            players[i].wins++;
-            players[j].losses++;
-            cout << players[i].name << " Wins!" << " Total Wins: " << players[i].wins << endl;
-            cout << players[j].name << " Loses!" << " Total Losses: " << players[j].losses << endl;
-        }
-    } */
+    /* 
+        for(int i = 0; i < size; i++){
+            for(int j = i + 1; j < size; j++){
+                cout << players[i].name << " VS " << players[j].name << endl;
+                //have runGame return the struct that we built at the top
+                //runGame(500, players[i].name, players[j].name);
+                players[i].wins++;
+                players[j].losses++;
+                cout << players[i].name << " Wins!" << " Total Wins: " << players[i].wins << endl;
+                cout << players[j].name << " Loses!" << " Total Losses: " << players[j].losses << endl;
+            }
+        } 
+    */
 
     string clientNameOne = players[0].name;
     string clientNameTwo = players[0].name; // will change to one at some point
