@@ -37,9 +37,8 @@ int main(){
         make a list of all AI executable files
         call runGame() for those files and do tourney cr-arbage
     */
-    int i;
     Player players[playerCount];
-    i = system("ls ./client_Ais > temp.txt");
+    system("ls ./client_Ais > temp.txt");
     int size = 0;
     string line;
     ifstream myfile ("temp.txt");

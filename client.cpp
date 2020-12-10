@@ -26,6 +26,7 @@ void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
+void shotReturned();
 
 
 
@@ -105,15 +106,22 @@ int main(int argc, char *argv[]){
 }
 
 void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize){
-    msg.at("client") = clientID;
-    msg.at("count") = round;
-
+    
     if(msg.at("messageType")=="placeShip"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         placeShip(msg, shipBoard, boardSize);
     }else if(msg.at("messageType")=="shootShot"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         shootShot(msg, shotBoard, boardSize);
     }else if(msg.at("messageType")=="shipDead"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         //shipDied(msg, shotBoard, boardSize);
+    }
+    else if (msg.at("messageType")=="shotReturn"){
+        shotReturned();
     }
 }
 
@@ -163,4 +171,10 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
     }else if(dir==NONE){
         board[row][col]=newChar;
     }
+}
+
+void shotReturned(){
+    cout << endl << endl;
+    cout << "Got to shotReturned() function in client" << endl;
+     cout << endl << endl;
 }

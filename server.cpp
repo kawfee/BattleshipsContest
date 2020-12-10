@@ -57,7 +57,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound,
             json (&c1Ships)[6], json (&c2Ships)[6]);
 bool placeShip(char board[10][10] , char shipBoard[10][10], int boardSize, int row, int col, int length, Direction dir, json &msg, json (&ships)[6]);
-bool shootShot(char board[10][10] , int boardSize, int row, int col);
+char shootShot(char board[10][10] , int boardSize, int row, int col);
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
 int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
 
@@ -152,7 +152,9 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
 
         //     -findDeadShip is suspect in its workability--give it a once-over before starting to work on the rest.
         
+        
         if(totalGameRound <= 6){
+            // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
             p1Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[0],
                     countConnected, msg, shipLengths, buffer, activity,
                     address, addrlen, client_socket, dConnect, c1,
@@ -172,7 +174,21 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                     valread, clientStr, clientResponse, "client1",
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
-            findDeadShip(numShips, c1Ships, msg, c1Board);
+
+            //json* tempMsg = new json(*msg);
+            // Just in case we need a deep copy
+            json tempMsg = {
+                {"messageType", msg.at("messageType")},
+                {"row", msg.at("row")},
+                {"col", msg.at("col")},
+                {"str", msg.at("str")},
+                {"dir", msg.at("dir")},
+                {"length", msg.at("length")},
+                {"client", msg.at("client")},
+                {"count", msg.at("count")}
+            }; 
+            cout << "SETTING TEMPMESSAGE TO MESSAGE: " << endl << tempMsg << endl;
+            
 
             // if( checkKilledShip(...) == True ) {
             //     performAction("shipKilled", ...);
@@ -184,26 +200,34 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
-            findDeadShip(numShips, c2Ships, msg, c2Board);
-        }
-        // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
 
-        //handle error checking one of the ais died or times out -- use p1Result & p2Result
-        if(!p1Result && !p2Result){
-            // return no winner
-            cout << "TIE!" << endl;
-            return 1;
+            //do error checking
+            if(!p1Result && !p2Result){
+                // return no winner
+                cout << "BOTH AI DIED!" << endl;
+                return 1;
+            }
+            else if(p1Result && !p2Result){
+                // return p1 as winner
+                cout << "p2 DIED!" << endl;
+                return 1;
+            }
+            else if(!p1Result && p2Result){
+                // return p2 as winner
+                cout << "p1 DIED!" << endl;
+                return 1;
+            }
+
+            
+            //do dead ship checking 
+            // --WIP--
+            cout << "tempMessage:" << endl << tempMsg << endl;
+            cout << "message: " << endl << msg << endl;
+            int p1DeadShip = findDeadShip(numShips, c1Ships, tempMsg, c1Board);
+            int p2DeadShip = findDeadShip(numShips, c2Ships, msg, c2Board);
         }
-        else if(p1Result && !p2Result){
-            // return p1 as winner
-            cout << "p1 WINS!" << endl;
-            return 1;
-        }
-        else if(!p1Result && p2Result){
-            // return p2 as winner
-            cout << "p2 WINS!" << endl;
-            return 1;
-        }
+        
+
 
         if(totalGameRound>=6){
             int gameStatus = gameOver(c1Ships, c2Ships);
@@ -516,6 +540,9 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             Depending on which client we have passed to this function we go into their if statement and procede to call our
             different helper functions depending on which action we are going to perform.
             */
+            
+            char shotReturnValue = PLACE_SHIP;
+
             if(currentClient=="client1"){
                 cout << "Got into client1" <<endl;
                 if(messageType=="placeShip"){
@@ -527,7 +554,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shootShot(c1Board, boardSize, tempRow, tempCol);
+                    shotReturnValue = shootShot(c1Board, boardSize, tempRow, tempCol);
                 }
             }else if(currentClient=="client2"){
                 cout << "Got into client2" <<endl;
@@ -540,8 +567,34 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shootShot(c2Board, boardSize, tempRow, tempCol);
+                    shotReturnValue = shootShot(c2Board, boardSize, tempRow, tempCol);
                 }
+            }
+            
+            if(messageType == "shootShot"){
+                cout << "Got into shotReturnValue if statement" << endl;
+                if(shotReturnValue==INVALID_SHOT){
+                    //TODO deal with INVALID_SHOTs
+                    cout << "INVALID_SHOT returned by shootShot handler" << endl;
+                }
+                string temp(1, shotReturnValue); // converts char to string of size 1
+                msg.at("str") = temp;
+                //communicate the shotReturnValue to both clients
+                performAction("shotReturn", readfds, master_socket, max_sd, client_socket[0],
+                    countConnected, msg, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c,
+                    valread, clientStr, clientResponse, "client1",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships); // we have c in this function call bad for now
+
+                string temp2(1, shotReturnValue); // converts char to string of size 1
+                msg.at("str") = temp2;
+                performAction("shotReturn", readfds, master_socket, max_sd, client_socket[1],
+                    countConnected, msg, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c,
+                    valread, clientStr, clientResponse, "client2",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships); // we have c in this function call bad for now
             }
 
             printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
@@ -603,28 +656,27 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
     return true;
 }
 
-bool shootShot(char board[10][10], int boardSize, int row, int col){
+char shootShot(char board[10][10], int boardSize, int row, int col){
     printf("Got into shootShot\n");
     if( (row>=boardSize || col>=boardSize) || (row<0 || col<0) ){
         cout << "Shot out of bounds" << endl;
-        return false;
+        return INVALID_SHOT;
     }
     if(board[row][col]==WATER){
         board[row][col]=MISS;
+        return MISS;
     }else if(board[row][col]==SHIP){
         board[row][col]=HIT;
+        return HIT;
     }else if(board[row][col]==HIT || board[row][col]==KILL){
         board[row][col]=DUPLICATE_SHOT;
-        return false;
+        return INVALID_SHOT; // maybe change to DUPLICATE_SHOT if necessary
     }
-    printf("Finished shootShot\n");
-    return true;
+    printf("Invalid shot returned in shootShot\n");
+    return INVALID_SHOT;
 }
 
-//findDeadShip is WIP
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]){
-    //TODO: Make this function return an integer and have it return -1 if all ships are alive,
-    //but if a ship is dead return the index of that ship and put that into a variable at function call.
 
     printf("Got into findDeadShip\n");
     cout << "Message: " << msg << endl;
@@ -704,12 +756,3 @@ int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
         return -1;
     }
 }
-
-/*
-    bool gameOver(){
-        allDeadp1 = true
-        for(ship in c1Ships):
-            if ship != dead:
-                allDeadp1 = false
-    }
-*/
