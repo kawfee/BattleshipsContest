@@ -57,7 +57,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound,
             json (&c1Ships)[6], json (&c2Ships)[6]);
 bool placeShip(char board[10][10] , char shipBoard[10][10], int boardSize, int row, int col, int length, Direction dir, json &msg, json (&ships)[6]);
-char shootShot(char board[10][10] , int boardSize, int row, int col);
+bool shootShot(char board[10][10] , int boardSize, int row, int col);
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
 int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
 
@@ -172,7 +172,7 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                     valread, clientStr, clientResponse, "client1",
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
-            
+            findDeadShip(numShips, c1Ships, msg, c1Board);
 
             // if( checkKilledShip(...) == True ) {
             //     performAction("shipKilled", ...);
@@ -184,31 +184,26 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
-
-            //error checking--did one of the AIs die?
-            if(!p1Result && !p2Result){
-                // return no winner
-                cout << "TIE!" << endl;
-                return 1;
-            }
-            else if(p1Result && !p2Result){
-                // return p1 as winner
-                cout << "p1 WINS!" << endl;
-                return 1;
-            }
-            else if(!p1Result && p2Result){
-                // return p2 as winner
-                cout << "p2 WINS!" << endl;
-                return 1;
-            }
-
-            //dead ship checking--did a ship die?
-            findDeadShip(numShips, c1Ships, msg, c1Board);
             findDeadShip(numShips, c2Ships, msg, c2Board);
         }
         // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
 
-        
+        //handle error checking one of the ais died or times out -- use p1Result & p2Result
+        if(!p1Result && !p2Result){
+            // return no winner
+            cout << "TIE!" << endl;
+            return 1;
+        }
+        else if(p1Result && !p2Result){
+            // return p1 as winner
+            cout << "p1 WINS!" << endl;
+            return 1;
+        }
+        else if(!p1Result && p2Result){
+            // return p2 as winner
+            cout << "p2 WINS!" << endl;
+            return 1;
+        }
 
         if(totalGameRound>=6){
             int gameStatus = gameOver(c1Ships, c2Ships);
@@ -417,7 +412,6 @@ void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_s
 void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]){
     //set the string terminating NULL byte on the end
     //of the data read
-
     buffer[valread] = '\0';
 
     clientStr = "";
@@ -462,28 +456,20 @@ void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg, int (&shipLengths)[6],
             char (&buffer)[1500], int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
             Popen &c, int &valread, string &clientStr, json &clientResponse, string currentClient, char c1Board[10][10],
-            char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound, 
-            json (&c1Ships)[6], json (&c2Ships)[6]){
+            char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound, json (&c1Ships)[6], json (&c2Ships)[6]){
     //prepare the sockets for the connection
     prepSockets(readfds, master_socket, max_sd, sd, countConnected);
 
     cout << "currentClient: " << currentClient << endl;
-    cout << "<------------------------------------------------------------------------->" << endl;
-    cout << "MESSAGE: " << msg.dump() << endl;
 
     // send message by setting json data given in function call
-    cout << "MESSAGETYPE: " << messageType << endl;
     msg.at("messageType") = messageType;
     if(messageType == "placeShip"){
         cout <<  "totalGameRound: " << totalGameRound << endl;
         msg.at("length") = shipLengths[totalGameRound-1];
     }
-    printf("GOT TO HERE 1\n");
     strcpy(buffer, msg.dump().c_str());
-    printf("GOT TO HERE 2\n");
-    send(sd , buffer , strlen(buffer), 0 );
-
-    printf("GOT TO HERE 3\n");
+    send(sd , buffer , strlen(buffer) , 0 );
 
     //wait at the sockets for a change,
     //if it takes longer than timeval tv the process is killed and activity gets a value less then 0.
@@ -530,7 +516,6 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             Depending on which client we have passed to this function we go into their if statement and procede to call our
             different helper functions depending on which action we are going to perform.
             */
-            char shotReturnValue=PLACE_SHIP;
             if(currentClient=="client1"){
                 cout << "Got into client1" <<endl;
                 if(messageType=="placeShip"){
@@ -542,7 +527,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shotReturnValue=shootShot(c1Board, boardSize, tempRow, tempCol);
+                    shootShot(c1Board, boardSize, tempRow, tempCol);
                 }
             }else if(currentClient=="client2"){
                 cout << "Got into client2" <<endl;
@@ -555,42 +540,8 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shotReturnValue=shootShot(c2Board, boardSize, tempRow, tempCol);
+                    shootShot(c2Board, boardSize, tempRow, tempCol);
                 }
-            }
-
-            /* 
-                json msg = {
-                    {"messageType", "placeShip"},
-                    {"row", -1},
-                    {"col", -1},
-                    {"str", ""},
-                    {"dir", NONE},
-                    {"length", 3},
-                    {"client", "none"},
-                    {"count", 0}
-                }; 
-            */
-            
-            if(shotReturnValue!=PLACE_SHIP){
-                cout << "-----------------------SENDING SHOT RETURN VALUE MESSAGE!!!!!-------------------------------" << endl;
-
-                memset(&buffer, 0, sizeof(buffer));//clear the buffer
-                
-                cout << "buffer: " << buffer << endl;
-
-                //do something with shotReturnValue
-                msg.at("messageType") = "shotReturn";
-                string tempStr(1, shotReturnValue);
-                msg.at("str") = tempStr;
-                cout << "MESSAGE: " << msg.at("str") << endl;
-                
-                strcpy(buffer, msg.dump().c_str());
-                
-                //prepSockets(readfds, master_socket, max_sd, client_socket[0], countConnected);
-                send(client_socket[0] , buffer , strlen(buffer) , 0 );
-                //prepSockets(readfds, master_socket, max_sd, client_socket[1], countConnected);
-                send(client_socket[1] , buffer , strlen(buffer) , 0 );
             }
 
             printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
@@ -652,29 +603,25 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
     return true;
 }
 
-char shootShot(char board[10][10], int boardSize, int row, int col){
+bool shootShot(char board[10][10], int boardSize, int row, int col){
     printf("Got into shootShot\n");
     if( (row>=boardSize || col>=boardSize) || (row<0 || col<0) ){
         cout << "Shot out of bounds" << endl;
-        return INVALID_SHOT;
+        return false;
     }
     if(board[row][col]==WATER){
         board[row][col]=MISS;
-        printf("Finished shootShot\n");
-        return MISS;
     }else if(board[row][col]==SHIP){
         board[row][col]=HIT;
-        printf("Finished shootShot\n");
-        return HIT;
     }else if(board[row][col]==HIT || board[row][col]==KILL){
         board[row][col]=DUPLICATE_SHOT;
-        return INVALID_SHOT;
+        return false;
     }
-
-    printf("Invalid shootShot input\n");
-    return INVALID_SHOT;
+    printf("Finished shootShot\n");
+    return true;
 }
 
+//findDeadShip is WIP
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]){
     //TODO: Make this function return an integer and have it return -1 if all ships are alive,
     //but if a ship is dead return the index of that ship and put that into a variable at function call.
@@ -758,3 +705,11 @@ int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
     }
 }
 
+/*
+    bool gameOver(){
+        allDeadp1 = true
+        for(ship in c1Ships):
+            if ship != dead:
+                allDeadp1 = false
+    }
+*/
