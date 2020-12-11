@@ -60,28 +60,76 @@ bool placeShip(char board[10][10] , char shipBoard[10][10], int boardSize, int r
 char shootShot(char board[10][10] , int boardSize, int row, int col);
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
 int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
+int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
+    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2);
 
 
 
-//runGame(10, "client", "client");
-
-//int runGame(int boardSize, string client1, string client2)
 int runGame(int numGames, string clientNameOne, string clientNameTwo){
-    
+    //setup socket functionality
     //create the server variables
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
-        max_clients=2 , activity, i , valread , sd, max_sd,
-        dConnect=0, countConnected=0, totalGameRound=1;
+        max_clients=2 , activity, i , valread=1 , sd, max_sd,
+        dConnect=0, countConnected=0;
     struct sockaddr_in address;
+    //set of socket descriptors
+    fd_set readfds;
+
+    json msg = {
+        {"messageType", "placeShip"},
+        {"row", -1},
+        {"col", -1},
+        {"str", ""},
+        {"dir", NONE},
+        {"length", 3},
+        {"client", "none"},
+        {"count", 0}
+    };
+
+    setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
+
+    auto c1 = Popen({"./client_Ais/"+clientNameOne});
+    auto c2 = Popen({"./client_Ais/"+clientNameTwo});
+
+    masterSocketConnection(readfds, master_socket, max_sd, activity,
+        new_socket, address, addrlen, msg,
+        max_clients, client_socket, i, countConnected);
+    masterSocketConnection(readfds, master_socket, max_sd, activity,
+        new_socket, address, addrlen, msg,
+        max_clients, client_socket, i, countConnected);
+
+    int stuff = 0;
+    // Starting game stuff
+    for(int i = 0; i <  numGames; i++){
+        stuff += runMatch(clientNameOne, clientNameTwo, master_socket, addrlen, client_socket, activity, valread, sd,
+            max_sd, dConnect, countConnected, address, readfds, c1, c2);
+    }
+    c1.kill();
+    c2.kill();
+    childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
+    childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
+    return stuff;
+    /* while(running_game){
+        runMatch();
+        //save match results
+    } */
+
+    //return the struct full of data
+}
+
+//int runGame(int boardSize, string client1, string client2)
+int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
+    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2){
+
+    int totalGameRound=1;
+    
     char buffer[1500];
     string clientStr, currentClient;
 
     //result variables when calling game functions for error checking
     bool p1Result, p2Result;
 
-    //set of socket descriptors
-    fd_set readfds;
     json msg = {
         {"messageType", "placeShip"},
         {"row", -1},
@@ -119,21 +167,7 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
         }
     }
 
-    setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
-
-    auto c1 = Popen({"./client_Ais/"+clientNameOne});
-    auto c2 = Popen({"./client_Ais/"+clientNameTwo});
-
     while(TRUE){
-        if(countConnected < 2){
-            //make sure that there are two connections to the master socket
-            masterSocketConnection(readfds, master_socket, max_sd, activity,
-                        new_socket, address, addrlen, msg,
-                        max_clients, client_socket, i, countConnected);
-            masterSocketConnection(readfds, master_socket, max_sd, activity,
-                        new_socket, address, addrlen, msg,
-                        max_clients, client_socket, i, countConnected);
-        }
 
         // plan for the future
         //     p1Result = placeShip();
@@ -188,11 +222,6 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 {"count", msg.at("count")}
             }; 
             cout << "SETTING TEMPMESSAGE TO MESSAGE: " << endl << tempMsg << endl;
-            
-
-            // if( checkKilledShip(...) == True ) {
-            //     performAction("shipKilled", ...);
-            // }
                 
             p2Result = performAction("shootShot", readfds, master_socket, max_sd, client_socket[1],
                 countConnected, msg, shipLengths, buffer, activity,
@@ -202,6 +231,65 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 c1Ships, c2Ships);
 
             //do error checking
+            if(!p1Result && !p2Result){
+                // return no winner
+                cout << "BOTH AI CRASHED!" << endl;
+                return 1;
+            }
+            else if(p1Result && !p2Result){
+                // return p1 as winner
+                cout << "p2 CRASHED!" << endl;
+                return 1;
+            }
+            else if(!p1Result && p2Result){
+                // return p2 as winner
+                cout << "p1 CRASHED!" << endl;
+                return 1;
+            }
+
+            
+            //do dead ship checking 
+            // --WIP--
+            cout << "tempMessage:" << endl << tempMsg << endl;
+            cout << "message: " << endl << msg << endl;
+            int p1DeadShip = findDeadShip(numShips, c1Ships, tempMsg, c1Board);
+            int p2DeadShip = findDeadShip(numShips, c2Ships, msg, c2Board);
+
+            if(p1DeadShip>=0){
+                json currShip = c1Ships[p1DeadShip];
+
+                p1Result = performAction("shipDied", readfds, master_socket, max_sd, client_socket[0],
+                    countConnected, currShip, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c1,
+                    valread, clientStr, clientResponse, "client1",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+                    
+                p2Result = performAction("killedShip", readfds, master_socket, max_sd, client_socket[1],
+                    countConnected, currShip, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c2,
+                    valread, clientStr, clientResponse, "client2",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+            }
+            if(p2DeadShip>=0){
+                json currShip = c2Ships[p2DeadShip];
+
+                p1Result = performAction("killedShip", readfds, master_socket, max_sd, client_socket[0],
+                    countConnected, currShip, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c1,
+                    valread, clientStr, clientResponse, "client1",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+
+                p2Result = performAction("shipDied", readfds, master_socket, max_sd, client_socket[1],
+                    countConnected, currShip, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c2,
+                    valread, clientStr, clientResponse, "client2",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+            }
+            //do error checking part two, electric baloogaloo
             if(!p1Result && !p2Result){
                 // return no winner
                 cout << "BOTH AI DIED!" << endl;
@@ -217,14 +305,6 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                 cout << "p1 DIED!" << endl;
                 return 1;
             }
-
-            
-            //do dead ship checking 
-            // --WIP--
-            cout << "tempMessage:" << endl << tempMsg << endl;
-            cout << "message: " << endl << msg << endl;
-            int p1DeadShip = findDeadShip(numShips, c1Ships, tempMsg, c1Board);
-            int p2DeadShip = findDeadShip(numShips, c2Ships, msg, c2Board);
         }
         
 
@@ -243,11 +323,19 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
                     cout << "PLAYER 2 WINS!" << endl;
                 }
 
-                c1.kill();
-                c2.kill();
-                childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
-                childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
-
+                p1Result = performAction("matchOver", readfds, master_socket, max_sd, client_socket[0],
+                    countConnected, msg, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c1,
+                    valread, clientStr, clientResponse, "client1",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+                p2Result = performAction("matchOver", readfds, master_socket, max_sd, client_socket[1],
+                    countConnected, msg, shipLengths, buffer, activity,
+                    address, addrlen, client_socket, dConnect, c2,
+                    valread, clientStr, clientResponse, "client2",
+                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                    c1Ships, c2Ships);
+                
                 return 1;
             } 
         }

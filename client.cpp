@@ -22,12 +22,12 @@
 using namespace std;
 using json=nlohmann::json;
 
-void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize);
+void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
-void shotReturned();
-
+void shotReturned(json &msg);
+void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 
 
 int main(int argc, char *argv[]){
@@ -68,12 +68,8 @@ int main(int argc, char *argv[]){
     char shotBoard[10][10];
 
     //populate boards
-    for(int row=0;row<boardSize;row++){
-        for(int col=0;col<boardSize;col++){
-            shipBoard[row][col]=WATER;
-            shotBoard[row][col]=WATER;
-        }
-    }
+    wipeBoards(shipBoard, shotBoard, boardSize);
+    
     while(1){
         round++;
 
@@ -105,9 +101,11 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][10], char shotBoard[10][10], int boardSize){
+void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize){
     
-    if(msg.at("messageType")=="placeShip"){
+    if(msg.at("messageType")=="gameOver"){
+        wipeBoards(shipBoard, shotBoard, boardSize);
+    }else if(msg.at("messageType")=="placeShip"){
         msg.at("client") = clientID;
         msg.at("count") = round;
         placeShip(msg, shipBoard, boardSize);
@@ -115,13 +113,25 @@ void messageHandler(json &msg, string &clientID, int &round, char shipBoard[10][
         msg.at("client") = clientID;
         msg.at("count") = round;
         shootShot(msg, shotBoard, boardSize);
-    }else if(msg.at("messageType")=="shipDead"){
-        msg.at("client") = clientID;
-        msg.at("count") = round;
-        //shipDied(msg, shotBoard, boardSize);
+    }else if (msg.at("messageType")=="shotReturn"){
+        shotReturned(msg);
+    }else if(msg.at("messageType")=="shipDied"){
+        //char board[10][10], int row, int col, int length, Direction dir, char newChar
+        updateBoard(shipBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
+        cout << endl << "-----------------SHIP HEKKIN DIED-----------------" << endl << endl << endl;
+    }else if (msg.at("messageType")=="killedShip"){
+        updateBoard(shotBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
+        cout << endl << endl << endl << "-----------------KILLED SHIP-----------------" << endl << endl << endl;
     }
-    else if (msg.at("messageType")=="shotReturn"){
-        shotReturned();
+    
+}
+
+void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize){
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            shipBoard[row][col]=WATER;
+            shotBoard[row][col]=WATER;
+        }
     }
 }
 
@@ -173,8 +183,7 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
     }
 }
 
-void shotReturned(){
-    cout << endl << endl;
+void shotReturned(json &msg){
     cout << "Got to shotReturned() function in client" << endl;
-     cout << endl << endl;
+    // Do something with the message data here. 
 }
