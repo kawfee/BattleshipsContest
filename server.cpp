@@ -7,10 +7,9 @@
         https://simpledevcode.wordpress.com/2016/06/16/client-server-chat-in-c-using-sockets/
         https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 
-    Github for json library:
+    Github libraries:
+        https://github.com/kawfee/BattleshipsContest
         https://github.com/nlohmann/json
-
-    Github for subprocess library:
         https://github.com/arun11299/cpp-subprocess
 */
 
@@ -60,12 +59,15 @@ bool placeShip(char board[10][10] , char shipBoard[10][10], int boardSize, int r
 char shootShot(char board[10][10] , int boardSize, int row, int col);
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
 int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
-int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
+bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
+            int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
+            Popen &c, int &valread);
+int runMatch(Player &player1, Player &player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
     int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2);
 
 
 
-int runGame(int numGames, string clientNameOne, string clientNameTwo){
+int runGame(int numGames, Player &player1, Player &player2, int boardSize){
     //setup socket functionality
     //create the server variables
     int opt = TRUE;
@@ -76,50 +78,65 @@ int runGame(int numGames, string clientNameOne, string clientNameTwo){
     //set of socket descriptors
     fd_set readfds;
 
-    json msg = {
-        {"messageType", "placeShip"},
+    json gameMsg = {
+        {"messageType", "setupGame"},
         {"row", -1},
         {"col", -1},
-        {"str", ""},
+        {"str", to_string(boardSize)},
         {"dir", NONE},
-        {"length", 3},
+        {"length", -1},
         {"client", "none"},
         {"count", 0}
     };
 
     setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
 
-    auto c1 = Popen({"./client_Ais/"+clientNameOne});
-    auto c2 = Popen({"./client_Ais/"+clientNameTwo});
+    auto c1 = Popen({"./client_Ais/"+player1.name});
+    auto c2 = Popen({"./client_Ais/"+player2.name});
 
     masterSocketConnection(readfds, master_socket, max_sd, activity,
-        new_socket, address, addrlen, msg,
+        new_socket, address, addrlen, gameMsg,
         max_clients, client_socket, i, countConnected);
     masterSocketConnection(readfds, master_socket, max_sd, activity,
-        new_socket, address, addrlen, msg,
+        new_socket, address, addrlen, gameMsg,
         max_clients, client_socket, i, countConnected);
 
-    int stuff = 0;
+    sendReceive(player1, readfds, master_socket, max_sd, client_socket[0], countConnected, gameMsg,
+        activity, address, addrlen, client_socket, dConnect,
+        c1, valread);
+
+    sendReceive(player2, readfds, master_socket, max_sd, client_socket[1], countConnected, gameMsg,
+        activity, address, addrlen, client_socket, dConnect,
+        c2, valread);        
+
+    cout << "Authors: "        << player1.author << endl
+         << "+ Author other: " << player2.author << endl;
+    
+
     // Starting game stuff
+    int stuff = 0;
     for(int i = 0; i <  numGames; i++){
-        stuff += runMatch(clientNameOne, clientNameTwo, master_socket, addrlen, client_socket, activity, valread, sd,
+        cout << "FOR LOOP ITERATIONS: " << i << "/" << numGames << endl;
+        stuff += runMatch(player1, player2, boardSize, master_socket, addrlen, client_socket, activity, valread, sd,
             max_sd, dConnect, countConnected, address, readfds, c1, c2);
+        // stuff += runMatch(player2, player1, master_socket, addrlen, client_socket, activity, valread, sd,
+        //     max_sd, dConnect, countConnected, address, readfds, c1, c2);
     }
+
     c1.kill();
     c2.kill();
     childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
     childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
+
+
     return stuff;
-    /* while(running_game){
-        runMatch();
-        //save match results
-    } */
+    
 
     //return the struct full of data
 }
 
-//int runGame(int boardSize, string client1, string client2)
-int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
+
+int runMatch(Player &player1, Player &player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
     int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2){
 
     int totalGameRound=1;
@@ -145,7 +162,6 @@ int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int 
 
     //create the game variables here
     int shipLengths[] = { 3,3,4,3,3,4 };
-    int boardSize = 10;
     int numShips = boardSize-2;
     if(numShips>6){
         numShips=6;
@@ -190,11 +206,11 @@ int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int 
         if(totalGameRound <= 6){
             // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
             p1Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[0],
-                    countConnected, msg, shipLengths, buffer, activity,
-                    address, addrlen, client_socket, dConnect, c1,
-                    valread, clientStr, clientResponse, "client1",
-                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
-                    c1Ships, c2Ships);
+                countConnected, msg, shipLengths, buffer, activity,
+                address, addrlen, client_socket, dConnect, c1,
+                valread, clientStr, clientResponse, "client1",
+                c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                c1Ships, c2Ships);
             p2Result = performAction("placeShip", readfds, master_socket, max_sd, client_socket[1],
                 countConnected, msg, shipLengths, buffer, activity,
                 address, addrlen, client_socket, dConnect, c2,
@@ -203,11 +219,11 @@ int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int 
                 c1Ships, c2Ships);
         }else{
             p1Result = performAction("shootShot", readfds, master_socket, max_sd, client_socket[0],
-                    countConnected, msg, shipLengths, buffer, activity,
-                    address, addrlen, client_socket, dConnect, c1,
-                    valread, clientStr, clientResponse, "client1",
-                    c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
-                    c1Ships, c2Ships);
+                countConnected, msg, shipLengths, buffer, activity,
+                address, addrlen, client_socket, dConnect, c1,
+                valread, clientStr, clientResponse, "client1",
+                c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                c1Ships, c2Ships);
 
             //json* tempMsg = new json(*msg);
             // Just in case we need a deep copy
@@ -317,10 +333,16 @@ int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int 
                 // return struct with data
                 if(gameStatus==0){
                     cout << "TIE!" << endl;
+                    player1.ties += 1;
+                    player2.ties += 1;
                 }else if(gameStatus==1){
                     cout << "PLAYER 1 WINS!" << endl;
+                    player1.wins += 1;
+                    player2.losses += 1;
                 }else if(gameStatus==2){
                     cout << "PLAYER 2 WINS!" << endl;
+                    player1.losses += 1;
+                    player2.wins += 1;
                 }
 
                 p1Result = performAction("matchOver", readfds, master_socket, max_sd, client_socket[0],
@@ -341,7 +363,7 @@ int runMatch(string clientNameOne, string clientNameTwo, int master_socket, int 
         }
         
         //this is NOT the final number of rounds to be played--this is just a testing number. was at 13 for low turn count
-        if(totalGameRound >= 80){
+        if(totalGameRound >= 150){
             c1.kill();
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
@@ -595,7 +617,6 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
         c.kill();
         printf("Child disconnected in activity\n");
         childDisconnect(sd, address, addrlen, client_socket, dConnect);
-
         return false;
     }
 
@@ -609,6 +630,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             c.kill();
             printf("Child disconnected in valread\n");
             childDisconnect(sd, address, addrlen, client_socket, dConnect);
+            return false;
         }else{
             //this else statement is where the data is processed for the game
             childParse(clientStr, clientResponse, valread, buffer);
@@ -642,7 +664,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shotReturnValue = shootShot(c1Board, boardSize, tempRow, tempCol);
+                    shotReturnValue = shootShot(c2Board, boardSize, tempRow, tempCol);
                 }
             }else if(currentClient=="client2"){
                 cout << "Got into client2" <<endl;
@@ -655,7 +677,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
                     //cout << "Hello there but again" << endl;
-                    shotReturnValue = shootShot(c2Board, boardSize, tempRow, tempCol);
+                    shotReturnValue = shootShot(c1Board, boardSize, tempRow, tempCol);
                 }
             }
             
@@ -685,7 +707,9 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                     c1Ships, c2Ships); // we have c in this function call bad for now
             }
 
-            printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
+            if(msg.at("messageType")!="matchOver"){
+                printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
+            }
 
         }//FD_ISSET
     }
@@ -843,4 +867,54 @@ int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
     else{
         return -1;
     }
+}
+
+bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
+            int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
+            Popen &c, int &valread){
+    //prepare the sockets for the connection
+    prepSockets(readfds, master_socket, max_sd, sd, countConnected);
+    
+    char buffer[1500];
+
+    strcpy(buffer, msg.dump().c_str());
+    send(sd , buffer , strlen(buffer) , 0 );
+
+    //wait at the sockets for a change,
+    //if it takes longer than timeval tv the process is killed and activity gets a value less then 0.
+    struct timeval tv = {0, 500000}; // Half a second
+    activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
+
+    cout << "Activity: " << activity << endl;
+
+    // Handles a timeout error from the above select statement
+    if ((activity <= 0) && (errno!=EINTR)){
+        c.kill();
+        printf("Child disconnected in activity\n");
+        childDisconnect(sd, address, addrlen, client_socket, dConnect);
+        return false;
+    }
+
+    // If everything worked when setting up sockets
+    if(FD_ISSET(sd, &readfds)){
+        // If/else here:
+        //if: this means that read has failed and we shut things down. we notice this with valread.
+        //else: everything went fine and all values are acceptable--begin the actual processing for the game.
+        if ((valread = read( sd , buffer, 1499)) <= 0 || dConnect !=0){
+            //get the details of the disconnected client and print them
+            c.kill();
+            printf("Child disconnected in valread\n");
+            childDisconnect(sd, address, addrlen, client_socket, dConnect);
+            return false;
+        }else{
+            //this else statement is where the data is processed for the game
+            string temp="";
+            childParse(temp, msg, valread, buffer);
+
+            // get the authors from str
+            player.author = msg.at("str");
+
+        }//FD_ISSET
+    }
+    return true;
 }

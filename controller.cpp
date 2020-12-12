@@ -7,26 +7,12 @@
 
 #include "subprocess.hpp"
 #include "server.cpp"
+#include "defines.h"
 
 
 using namespace std;
 using namespace subprocess;
 
-struct Player {
-    string name;
-    int wins;
-    int losses;
-};
-
-struct gameInfo {
-    string winner;
-    int winnerWins;
-    int winnerLosses;
-
-    string loser;
-    int loserWins;
-    int loserLosses;
-};
 
 int main(){
     srand(time(NULL));
@@ -104,13 +90,19 @@ int main(){
     } */
 
     string clientNameOne = players[0].name;
-    string clientNameTwo = players[0].name; // will change to one at some point
+    string clientNameTwo = players[1].name; // will change to one at some point
 
     cout << "clientNameOne: " << clientNameOne << endl
          << "clientNameTwo: " << clientNameTwo << endl;
 
-    cout << runGame(10, clientNameOne, clientNameTwo) << endl;
+    int boardSize = 10;
+    int numGames = 100;
+
+    cout << runGame(numGames, players[0], players[1], boardSize) << endl;
     cout << "^^^ Game returned result" << endl;
+
+    cout << "PLAYER[0] RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
+    cout << "PLAYER[1] RECORD W-L-T: " << players[1].wins << " " << players[1].losses << " " << players[1].ties << endl;
 
     return 0;
 }

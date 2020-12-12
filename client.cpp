@@ -28,6 +28,7 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
 void shotReturned(json &msg);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
+void sendGameVars(json &msg);
 
 
 int main(int argc, char *argv[]){
@@ -103,7 +104,9 @@ int main(int argc, char *argv[]){
 
 void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize){
     
-    if(msg.at("messageType")=="gameOver"){
+    if(msg.at("messageType")=="setupGame"){
+        sendGameVars(msg);
+    }else if(msg.at("messageType")=="matchOver"){
         wipeBoards(shipBoard, shotBoard, boardSize);
     }else if(msg.at("messageType")=="placeShip"){
         msg.at("client") = clientID;
@@ -118,10 +121,10 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
     }else if(msg.at("messageType")=="shipDied"){
         //char board[10][10], int row, int col, int length, Direction dir, char newChar
         updateBoard(shipBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
-        cout << endl << "-----------------SHIP HEKKIN DIED-----------------" << endl << endl << endl;
+        cout << "shipDied for " << clientID << endl;
     }else if (msg.at("messageType")=="killedShip"){
         updateBoard(shotBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
-        cout << endl << endl << endl << "-----------------KILLED SHIP-----------------" << endl << endl << endl;
+        cout << clientID << " killedShip" << endl;
     }
     
 }
@@ -157,7 +160,7 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 }
 
 void shootShot(json &msg, char shotBoard[10][10], int boardSize){
-    for(int row=0;row<boardSize;row++){
+    for(int row=1;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
             if(shotBoard[row][col]==WATER){
                 msg.at("row") = row;
@@ -187,3 +190,8 @@ void shotReturned(json &msg){
     cout << "Got to shotReturned() function in client" << endl;
     // Do something with the message data here. 
 }
+
+void sendGameVars(json &msg){
+    msg.at("str") = "Matthew Bouch and Joey Gorski"; // Your author name(s) here
+}
+

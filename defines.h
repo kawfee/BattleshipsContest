@@ -34,4 +34,12 @@ using namespace std;
 
     enum Direction { NONE=0, HORIZONTAL=1, VERTICAL=2 };
 
+    // Struct information
+    struct Player {
+        string name;
+        string author;
+        int wins;
+        int ties;
+        int losses;
+    };
 #endif
