@@ -89,20 +89,20 @@ int main(){
         }
     } */
 
-    string clientNameOne = players[0].name;
-    string clientNameTwo = players[1].name; // will change to one at some point
+    string clientNameOne = players[2].name;
+    string clientNameTwo = players[0].name; // will change to one at some point
 
     cout << "clientNameOne: " << clientNameOne << endl
          << "clientNameTwo: " << clientNameTwo << endl;
 
     int boardSize = 10;
-    int numGames = 100;
+    int numGames = 1000;
 
-    cout << runGame(numGames, players[0], players[1], boardSize) << endl;
+    cout << runGame(numGames, players[2], players[0], boardSize) << endl;
     cout << "^^^ Game returned result" << endl;
 
-    cout << "PLAYER[0] RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
-    cout << "PLAYER[1] RECORD W-L-T: " << players[1].wins << " " << players[1].losses << " " << players[1].ties << endl;
+    cout << "PLAYER[0] RECORD W-L-T: " << players[2].wins << " " << players[2].losses << " " << players[2].ties << endl;
+    cout << "PLAYER[1] RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
 
     return 0;
 }

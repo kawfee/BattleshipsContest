@@ -1,7 +1,5 @@
 controller
 client_Ais/*
 !client_Ais/.gitkeep
-temp.txt
-tmp.txt
 old_Ais/
 *_copy.cpp

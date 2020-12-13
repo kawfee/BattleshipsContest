@@ -114,13 +114,18 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
     
 
     // Starting game stuff
-    int stuff = 0;
     for(int i = 0; i <  numGames; i++){
         cout << "FOR LOOP ITERATIONS: " << i << "/" << numGames << endl;
-        stuff += runMatch(player1, player2, boardSize, master_socket, addrlen, client_socket, activity, valread, sd,
+        int match = runMatch(player1, player2, boardSize, master_socket, addrlen, client_socket, activity, valread, sd,
             max_sd, dConnect, countConnected, address, readfds, c1, c2);
-        // stuff += runMatch(player2, player1, master_socket, addrlen, client_socket, activity, valread, sd,
-        //     max_sd, dConnect, countConnected, address, readfds, c1, c2);
+        cout << "RUNMATCH: " << match << endl;
+        if(match <= 0){
+            c1.kill();
+            c2.kill();
+            childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
+            childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
+            return -1; // or a break maybe? change as necessary
+        }
     }
 
     c1.kill();
@@ -129,10 +134,7 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
     childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
 
 
-    return stuff;
-    
-
-    //return the struct full of data
+    return 1;
 }
 
 
@@ -250,17 +252,23 @@ int runMatch(Player &player1, Player &player2, int boardSize, int master_socket,
             if(!p1Result && !p2Result){
                 // return no winner
                 cout << "BOTH AI CRASHED!" << endl;
-                return 1;
+                player1.losses += 1;
+                player2.losses += 1;
+                return -1;
             }
             else if(p1Result && !p2Result){
                 // return p1 as winner
                 cout << "p2 CRASHED!" << endl;
-                return 1;
+                player1.wins += 1;
+                player2.losses += 1;
+                return -1;
             }
             else if(!p1Result && p2Result){
                 // return p2 as winner
                 cout << "p1 CRASHED!" << endl;
-                return 1;
+                player1.losses += 1;
+                player2.wins += 1;
+                return -1;
             }
 
             
@@ -308,18 +316,24 @@ int runMatch(Player &player1, Player &player2, int boardSize, int master_socket,
             //do error checking part two, electric baloogaloo
             if(!p1Result && !p2Result){
                 // return no winner
-                cout << "BOTH AI DIED!" << endl;
-                return 1;
+                cout << "BOTH AI CRASHED!" << endl;
+                player1.losses += 1;
+                player2.losses += 1;
+                return -1;
             }
             else if(p1Result && !p2Result){
                 // return p1 as winner
-                cout << "p2 DIED!" << endl;
-                return 1;
+                cout << "p2 CRASHED!" << endl;
+                player1.wins += 1;
+                player2.losses += 1;
+                return -1;
             }
             else if(!p1Result && p2Result){
                 // return p2 as winner
-                cout << "p1 DIED!" << endl;
-                return 1;
+                cout << "p1 CRASHED!" << endl;
+                player1.losses += 1;
+                player2.wins += 1;
+                return -1;
             }
         }
         
@@ -330,7 +344,7 @@ int runMatch(Player &player1, Player &player2, int boardSize, int master_socket,
 
             if(gameStatus>=0){
                 // perform game over logic
-                // return struct with data
+                // modify struct data
                 if(gameStatus==0){
                     cout << "TIE!" << endl;
                     player1.ties += 1;
@@ -363,7 +377,8 @@ int runMatch(Player &player1, Player &player2, int boardSize, int master_socket,
         }
         
         //this is NOT the final number of rounds to be played--this is just a testing number. was at 13 for low turn count
-        if(totalGameRound >= 150){
+        if(totalGameRound >= 300){
+            cout << "THE INSIDE OF THE TOTALGAMEROUND CHECKER WAS REACHED" << endl;
             c1.kill();
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
@@ -654,29 +669,25 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             char shotReturnValue = PLACE_SHIP;
 
             if(currentClient=="client1"){
-                cout << "Got into client1" <<endl;
+                // cout << "Got into client1" <<endl;
                 if(messageType=="placeShip"){
                     c1Ships[totalGameRound-1]=clientResponse;
                     placeShip(c1Board, c1ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c1Ships);
                 }else if(messageType=="shootShot"){
-                    cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
+                    // cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
                     int tempRow = msg.at("row");
-                    //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
-                    //cout << "Hello there but again" << endl;
                     shotReturnValue = shootShot(c2Board, boardSize, tempRow, tempCol);
                 }
             }else if(currentClient=="client2"){
-                cout << "Got into client2" <<endl;
+                // cout << "Got into client2" <<endl;
                 if(messageType=="placeShip"){
                     c2Ships[totalGameRound-1]=clientResponse;
                     placeShip(c2Board, c2ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c2Ships);
                 }else if(messageType=="shootShot"){
-                    cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
+                    // cout << "msg row and col: " << msg.at("row") << " " << msg.at("col") << endl;
                     int tempRow = msg.at("row");
-                    //cout << "Hello there" << endl;
                     int tempCol = msg.at("col");
-                    //cout << "Hello there but again" << endl;
                     shotReturnValue = shootShot(c1Board, boardSize, tempRow, tempCol);
                 }
             }
@@ -686,6 +697,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
                 if(shotReturnValue==INVALID_SHOT){
                     //TODO deal with INVALID_SHOTs
                     cout << "INVALID_SHOT returned by shootShot handler" << endl;
+                    return false;
                 }
                 string temp(1, shotReturnValue); // converts char to string of size 1
                 msg.at("str") = temp;
@@ -717,9 +729,9 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
 }
 
 bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int row, int col, int length, Direction dir, json &msg, json (&ships)[6]){
-    std::cout << "Ship Stuff: (len, dir) " << length << " " << dir << std::endl;
+    // std::cout << "Ship Stuff: (len, dir) " << length << " " << dir << std::endl;
     if( (row+length>boardSize || col+length>boardSize) || (row<0 || col<0) ){
-        cout << "Ship placement error: out of bounds" << endl;
+        // cout << "Ship placement error: out of bounds" << endl;
         return false;
     }
     if(dir==VERTICAL){
@@ -732,9 +744,9 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
     }
     if(dir==HORIZONTAL){
         for(int len=0;len<length;len++){
-            cout << "HORIZONTAL check space: " << "row, " << row << " col, " << (col+len) << " Spot, " << board[row][col+len] << endl;
+            // cout << "HORIZONTAL check space: " << "row, " << row << " col, " << (col+len) << " Spot, " << board[row][col+len] << endl;
             if(board[row][col+len]!=WATER){
-                cout << "Ship placement error: HORIZONTAL" << endl;
+                cerr << "Ship placement error: HORIZONTAL" << endl;
                 board[row][col+len] = 'E';
                 return false;
             }
@@ -743,7 +755,7 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
         }
     }else if(dir==VERTICAL){
         for(int len=0;len<length;len++){
-            cout << "VERTICAL check space: "  << "row, " << (row+len) << " col, " << col << " Spot, " << board[row+len][col] << endl;
+            // cout << "VERTICAL check space: "  << "row, " << (row+len) << " col, " << col << " Spot, " << board[row+len][col] << endl;
             if(board[row+len][col]!=WATER){
                 cerr << "Ship placement error: VERTICAL" << endl;
                 board[row+len][col] = 'E';
@@ -780,7 +792,7 @@ char shootShot(char board[10][10], int boardSize, int row, int col){
     }else if(board[row][col]==SHIP){
         board[row][col]=HIT;
         return HIT;
-    }else if(board[row][col]==HIT || board[row][col]==KILL){
+    }else if(board[row][col]==HIT || board[row][col]==KILL || board[row][col]==MISS){
         board[row][col]=DUPLICATE_SHOT;
         return INVALID_SHOT; // maybe change to DUPLICATE_SHOT if necessary
     }
@@ -796,7 +808,7 @@ int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]){
     bool allHit;
     for(int i=0; i<numShips; i++){
         printf("Top of main for loop\n");
-        cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
+        // cout << "Ship coordinates: (" << ships[i].at("row") << ", " << ships[i].at("col") << ")" << endl;
         allHit = true;
         for(int len=0;len<ships[i].at("length") && allHit; len++){
             cout << "Top of checker for loop: " << len << endl;
