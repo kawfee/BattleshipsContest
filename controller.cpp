@@ -34,6 +34,10 @@ int main(){
         while ( getline (myfile,line) )
         {
             players[size].name = line;
+            players[size].author = "";
+            players[size].wins = 0;
+            players[size].ties = 0;
+            players[size].losses = 0;
             size++;
         }
         myfile.close();
@@ -96,13 +100,13 @@ int main(){
          << "clientNameTwo: " << clientNameTwo << endl;
 
     int boardSize = 10;
-    int numGames = 1000;
+    int numGames = 10;
 
     cout << runGame(numGames, players[2], players[0], boardSize) << endl;
     cout << "^^^ Game returned result" << endl;
 
-    cout << "PLAYER[0] RECORD W-L-T: " << players[2].wins << " " << players[2].losses << " " << players[2].ties << endl;
-    cout << "PLAYER[1] RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
+    cout << "PLAYER[2] RECORD W-L-T: " << players[2].wins << " " << players[2].losses << " " << players[2].ties << endl;
+    cout << "PLAYER[0] RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
 
     return 0;
 }

@@ -42,4 +42,9 @@ using namespace std;
         int ties;
         int losses;
     };
+    struct GameInfo {
+        Player player1;
+        Player player2;
+        bool error;
+    };
 #endif
