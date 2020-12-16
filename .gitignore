@@ -1,6 +1,7 @@
 controller
 client_Ais/*
 !client_Ais/.gitkeep
+!client_Ais/py_ai
 old_Ais/
 *_copy.cpp
 temp.txt
