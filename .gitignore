@@ -1,7 +1,7 @@
 controller
-client_Ais/*
-!client_Ais/.gitkeep
-!client_Ais/py_ai.py
+AI_Executables/*
+!AI_Executables/.gitkeep
+!AI_Executables/py_ai.py
 old_Ais/
 *_copy.cpp
 temp.txt
