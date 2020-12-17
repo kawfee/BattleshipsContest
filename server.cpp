@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
 #include <iostream>
+#include <fstream>
 #include <cstring>
 
 #include "json.hpp"
@@ -50,6 +51,7 @@ void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &addre
 void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &dConnect);
 void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]);
 void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10][10], char c2Board[10][10]);
+void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream);
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
             int (&shipLengths)[6], char (&buffer)[1500], int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30],
             int &dConnect, Popen &c, int &valread, string &clientStr, json &clientResponse, string currentClient, char c1Board[10][10],
@@ -63,17 +65,18 @@ bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_s
             int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
             Popen &c, int &valread);
 GameInfo runMatch(Player player1, Player player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
-    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2);
+    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream);
 
 
 
-int runGame(int numGames, Player &player1, Player &player2, int boardSize){
+int runGame(int numGames, Player &player1, Player &player2, int boardSize, string matchFile){
     //setup socket functionality
     //create the server variables
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
         max_clients=2 , activity, i , valread=1 , sd, max_sd,
         dConnect=0, countConnected=0;
+    bool logging;
     struct sockaddr_in address;
     //set of socket descriptors
     fd_set readfds;
@@ -91,12 +94,12 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
 
     setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
 
-    auto c1 = Popen({"./client_Ais/"+player1.name});
+    auto c1 = Popen({"./AI_Executables/"+player1.name});
     masterSocketConnection(readfds, master_socket, max_sd, activity,
         new_socket, address, addrlen, gameMsg,
         max_clients, client_socket, i, countConnected);
 
-    auto c2 = Popen({"./client_Ais/"+player2.name});
+    auto c2 = Popen({"./AI_Executables/"+player2.name});
     masterSocketConnection(readfds, master_socket, max_sd, activity,
         new_socket, address, addrlen, gameMsg,
         max_clients, client_socket, i, countConnected);
@@ -112,12 +115,15 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
     cout << "Authors: "        << player1.author << endl
          << "+ Author other: " << player2.author << endl;
     
+    ofstream log_stream("./logs/" + matchFile);
+    log_stream << "Starting games" << endl;
+
 
     // Starting game stuff
     for(int i = 0; i <  numGames; i++){
         cout << "FOR LOOP ITERATIONS: " << i << "/" << numGames << endl;
         GameInfo match = runMatch(player1, player2, boardSize, master_socket, addrlen, client_socket, activity, valread, sd,
-            max_sd, dConnect, countConnected, address, readfds, c1, c2);
+            max_sd, dConnect, countConnected, address, readfds, c1, c2, numGames, i, log_stream);
         
         cout << "RUNMATCH: " << match.error << endl;
 
@@ -152,6 +158,9 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
         player2=match.player2;
     }
 
+    log_stream << "Ending games" << endl;
+    log_stream.close();
+
     c1.kill();
     c2.kill();
     childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
@@ -163,12 +172,26 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize){
 
 
 GameInfo runMatch(Player player1, Player player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
-    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2){
+    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream){
     GameInfo temp;
     temp.player1 = player1;
     temp.player2 = player2;
     temp.error=false;
     
+    bool logging;
+    if(matchNum < 25){
+        logging = true;
+    }
+    else if ((numGames - matchNum) <= 25){
+        logging = true;
+    }
+    else {
+        logging = false;
+    }
+    if(logging){
+        log_stream << "MATCH START ROUND: " << matchNum << endl;
+    }
+
     int totalGameRound=1;
     
     cout << endl << endl
@@ -295,7 +318,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.losses += 1;
                 temp.player2.losses += 1;
                 temp.error = true;
-                cout << "returned from return1" << endl;
                 return temp;
             }
             else if(p1Result && !p2Result){
@@ -304,7 +326,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.wins += 1;
                 temp.player2.losses += 1;
                 temp.error = true;
-                cout << "returned from return2" << endl;
                 return temp;
             }
             else if(!p1Result && p2Result){
@@ -313,7 +334,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.losses += 1;
                 temp.player2.wins += 1;
                 temp.error = true;
-                cout << "returned from return3" << endl;
                 return temp;
             }
 
@@ -365,7 +385,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.losses += 1;
                 temp.player2.losses += 1;
                 temp.error = true;
-                cout << "returned from return4" << endl;
                 return temp;
             }
             else if(p1Result && !p2Result){
@@ -374,7 +393,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.wins += 1;
                 temp.player2.losses += 1;
                 temp.error = true;
-                cout << "returned from return5" << endl;
                 return temp;
             }
             else if(!p1Result && p2Result){
@@ -383,12 +401,14 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 temp.player1.losses += 1;
                 temp.player2.wins += 1;
                 temp.error = true;
-                cout << "returned from return6" << endl;
                 return temp;
             }
         }
         
-
+        //log_stream << "Both AI did a move!" << endl;
+        if(msg["messageType"]!="placeShips" && logging){
+            logAll(boardSize, c1Board, c2Board, player1, player2, log_stream);
+        }
 
         if(totalGameRound>=6){
             int gameStatus = gameOver(c1Ships, c2Ships);
@@ -422,9 +442,12 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                     valread, clientStr, clientResponse, "client2",
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
+
+                if(logging){
+                    log_stream << "MATCH OVER" << endl;
+                }
                 
                 
-                cout << "returned from return7" << endl;
                 return temp;
             } 
         }
@@ -441,7 +464,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
         cout << "dConnect is equal to: " << dConnect << endl;
         if(dConnect>=2){
             temp.error=true;
-            cout << "returned from return8" << endl;
             return temp;
         }
 
@@ -449,7 +471,6 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
     }
 
     temp.error=true;
-    cout << "returned from return9" << endl;
     return temp;
 }
 
@@ -657,6 +678,23 @@ void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10
     }
     printf("*******************\n\n");
     printf("---------END OF PRINTALL---------\n");
+}
+
+void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream){
+    log_stream << player1.name << " by: " << player1.author << endl;
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            log_stream << c1Board[row][col];
+        }
+        log_stream << endl;
+    }
+    log_stream << player2.name << " by: " << player2.author << endl;
+    for(int row=0;row<boardSize;row++){
+        for(int col=0;col<boardSize;col++){
+            log_stream << c2Board[row][col];
+        }
+        log_stream << endl;
+    }
 }
 
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg, int (&shipLengths)[6],

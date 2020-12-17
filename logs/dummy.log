@@ -1,7 +1,6 @@
 ## This is an example log file for a match between two ais and it keeps a log of moves for playing and replaying a match
 MATCH_START-0
-clientNameOne
-authorName
+clientNameOne by: authorName
 X~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
@@ -12,8 +11,7 @@ X~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
-clientNameTwo
-authorName
+clientNameTwo by: authorName
 ~~~~~~~~~~
 X~~~~~~~~~
 ~~~~~~~~~~
@@ -24,7 +22,7 @@ X~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
-clientNameOne
+clientNameOne by: authorName
 XX~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
@@ -35,7 +33,7 @@ XX~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
-clientNameTwo
+clientNameTwo by: authorName
 ~~~~~~~~~~
 XX~~~~~~~~
 ~~~~~~~~~~
@@ -46,7 +44,7 @@ XX~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
-clientNameOne
+clientNameOne by: authorName
 KKK~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
@@ -57,7 +55,7 @@ KKK~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
 ~~~~~~~~~~
-clientNameTwo
+clientNameTwo by: authorName
 ~~~~~~~~~~
 KKK~~~~~~~
 ~~~~~~~~~~

@@ -26,13 +26,13 @@ int main(){
         call runGame() for those files and do tourney cr-arbage
     */
     Player players[playerCount];
-    system("ls ./client_Ais > ais.txt");
+    system("ls ./AI_Executables > ais.txt");
     int size = 0;
     string line;
-    ifstream myfile ("ais.txt");
-    if (myfile.is_open())
+    ifstream ai_file ("ais.txt");
+    if (ai_file.is_open())
     {
-        while ( getline (myfile,line) )
+        while ( getline (ai_file,line) )
         {
             players[size].name = line;
             players[size].author = "";
@@ -41,7 +41,7 @@ int main(){
             players[size].losses = 0;
             size++;
         }
-        myfile.close();
+        ai_file.close();
     }
     
     regex int_expr("^[0-9]+$");
@@ -76,7 +76,7 @@ int main(){
             boardSize = stoi(temp);    
         }
         
-        cout << "Watch all games or only the last? [(1:last), 2:all] ";
+        cout << "Watch all recorded games or only the last? [(1:last), 2:all] ";
         getline(cin, temp);
         if (regex_match(temp, int_expr)){
             watchAll = stoi(temp);    
@@ -120,10 +120,17 @@ int main(){
         cout << "clientNameOne: " << clientNameOne << endl
             << "clientNameTwo: " << clientNameTwo << endl;
 
+        string matchFile = clientNameOne + "_vs_" + clientNameTwo + ".log";
+        string remove = "rm ./logs/";
+        string touch = "touch ./logs/"; 
+        system((remove + matchFile).c_str());
+        system((touch + matchFile).c_str());
 
-        cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize) << endl;
+        //start game
+        cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile) << endl;
         cout << "^^^ Game returned result" << endl;
 
+        //display final stats
         cout << players[aiChoiceOne].name 
              <<" RECORD W-L-T: " 
              << players[aiChoiceOne].wins << " " 
@@ -137,71 +144,10 @@ int main(){
              << players[aiChoiceTwo].ties 
              << endl;
     }
-    return 0;
     
-    //start tournament
-    /* 
-        int remainingPlayers=size;
-        Player winners[size/2+1];
-        Player losers[size/2+1];
-        while(remainingPlayers>1){
-            Player match[2];
-            int choice=abs(rand()*100)%size;
-            string str1=movePlayer(choice, players, match, size);
-            
-            choice=abs(rand()*100)%size;
-            string str2=movePlayer(choice, players, match, size);
-
-            cout << str1 << " VS " << str2 << endl;
-
-            //find the winner/loser for now we are just skipping this and having player 1 always win
-            match[0].wins++;
-            match[1].losses++;
-            remainingPlayers-=2;
-            cout << match[0].name << "Wins!" << " Total Wins: " << match[0].wins << endl;
-            cout << match[1].name << "Loses!" << " Total Losses: " << match[1].losses << endl;
-            str1=movePlayer(0, match, winners, size/2+1);
-            str2=movePlayer(1, match, losers, size/2+1);
-            
-            
-
-        } 
-    */
-
-    /*
-        tourney structure:
-        X   -round robin (.5*numPlayers lives)
-            -brackets
-            -double elim/triple elim
-    */
-
-    /* 
-        for(int i = 0; i < size; i++){
-            for(int j = i + 1; j < size; j++){
-                cout << players[i].name << " VS " << players[j].name << endl;
-                //have runGame return the struct that we built at the top
-                //runGame(500, players[i].name, players[j].name);
-                players[i].wins++;
-                players[j].losses++;
-                cout << players[i].name << " Wins!" << " Total Wins: " << players[i].wins << endl;
-                cout << players[j].name << " Loses!" << " Total Losses: " << players[j].losses << endl;
-            }
-        } 
-    */
-
-    // string clientNameOne = players[2].name;
-    // string clientNameTwo = players[0].name; // will change to one at some point
-
-    // cout << "clientNameOne: " << clientNameOne << endl
-    //      << "clientNameTwo: " << clientNameTwo << endl;
-
-
-    // cout << runGame(numGames, players[2], players[0], boardSize) << endl;
-    // cout << "^^^ Game returned result" << endl;
-
-    // cout << players[2].name << " RECORD W-L-T: " << players[2].wins << " " << players[2].losses << " " << players[2].ties << endl;
-    // cout << players[0].name << " RECORD W-L-T: " << players[0].wins << " " << players[0].losses << " " << players[0].ties << endl;
-
+    
+    
+    system("rm ais.txt");
     return 0;
 }
 
@@ -215,13 +161,23 @@ int main(){
 
 
 
+/*
+        tourney structure:
+        X   -round robin (.5*numPlayers lives)
+            -brackets
+            -double elim/triple elim
+    */
+
 /* 
-    When we run the program, X happens.
-        - select competition, tournament, or 2 player test
-        - 2 player test
-            - asks how many games
-            - watch all games or just the last
-            - flow or stutter step games
-                - how fast does the game play
-            - which AIs will battle
-*/
+        for(int i = 0; i < size; i++){
+            for(int j = i + 1; j < size; j++){
+                cout << players[i].name << " VS " << players[j].name << endl;
+                //have runGame return the struct that we built at the top
+                //runGame(500, players[i].name, players[j].name);
+                players[i].wins++;
+                players[j].losses++;
+                cout << players[i].name << " Wins!" << " Total Wins: " << players[i].wins << endl;
+                cout << players[j].name << " Loses!" << " Total Losses: " << players[j].losses << endl;
+            }
+        } 
+    */
