@@ -14,4 +14,4 @@ move:
 	make; mv client AI_Executables; mv client_manual AI_Executables;
 
 clean:
-	rm -f ./AI_Executables/client ./AI_Executables/client_manual controller
+	rm -f ./AI_Executables/client ./AI_Executables/client_manual controller ais.txt

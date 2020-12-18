@@ -57,9 +57,9 @@ int main(int argc, char *argv[]){
     int status = connect(clientSd,
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0){
-        cout<<"Error connecting client to socket!"<<endl;
+        cerr<<"Error connecting client to socket!"<<endl;
     }else{
-    cout << "Connected client to the server!" << endl;
+        cout << "Connected client to the server!" << endl;
     }
 
     //declare variables for during the game
@@ -90,14 +90,14 @@ int main(int argc, char *argv[]){
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
         if( msg.dump().length()+1 > 1500 ){
-            cout << "UNSUPPORTED LENGTH REACHED BY: msg" << endl;
+            cerr << "UNSUPPORTED LENGTH REACHED BY: msg" << endl;
         }
         strcpy(buffer, msg.dump().c_str());
         send(clientSd, (char*)&buffer, strlen(buffer), 0);
     }
 
     close(clientSd);
-    cout << "Connection closed for client " << clientID << endl;
+    cerr << "Connection closed for client " << clientID << endl;
 
     return 0;
 }
@@ -121,10 +121,8 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
     }else if(msg.at("messageType")=="shipDied"){
         //char board[10][10], int row, int col, int length, Direction dir, char newChar
         updateBoard(shipBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
-        cout << "shipDied for " << clientID << endl;
     }else if (msg.at("messageType")=="killedShip"){
         updateBoard(shotBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
-        cout << clientID << " killedShip" << endl;
     }
     
 }
@@ -160,8 +158,8 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 }
 
 void shootShot(json &msg, char shotBoard[10][10], int boardSize){
-    for(int row=1;row<boardSize;row++){
-        for(int col=0;col<boardSize;col++){
+    for(int row=0;row<boardSize;row++){
+        for(int col=1;col<boardSize;col++){
             if(shotBoard[row][col]==WATER){
                 msg.at("row") = row;
                 msg.at("col") = col;
@@ -187,7 +185,7 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
 }
 
 void shotReturned(json &msg){
-    cout << "Got to shotReturned() function in client" << endl;
+    //cout << "Got to shotReturned() function in client" << endl;
     // Do something with the message data here. 
 }
 

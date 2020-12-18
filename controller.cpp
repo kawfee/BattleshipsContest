@@ -70,7 +70,7 @@ int main(){
             numGames = stoi(temp);    
         }
 
-        cout << "How size should the board be? (default: 10) ";
+        cout << "How size should the board be? (default: 10) "; // Maybe force value of boardSize to be in range 7-10
         getline(cin, temp);
         if (regex_match(temp, int_expr)){
             boardSize = stoi(temp);    
