@@ -5,6 +5,7 @@
 #include <time.h>
 #include <fstream>
 #include <regex>
+#include <time.h>
 
 #include "subprocess.hpp"
 #include "server.cpp"
@@ -16,6 +17,8 @@ using namespace subprocess;
 
 
 int main(){
+    time_t t1;
+    time_t t2;
     srand(time(NULL));
 
     // Edit how many players here
@@ -127,7 +130,12 @@ int main(){
         system((touch + matchFile).c_str());
 
         //start game
+        cout << "Running matches..." << endl;
+
+        time(&t1);
         cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile) << endl;
+        time(&t2);
+        cout << "Matches over." << endl;
         cout << "^^^ Game returned result" << endl;
 
         //display final stats
@@ -145,6 +153,7 @@ int main(){
              << endl;
     }
     
+    cout << "TIME: " << t2-t1 << endl;
     
     
     system("rm ais.txt");

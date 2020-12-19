@@ -190,6 +190,6 @@ void shotReturned(json &msg){
 }
 
 void sendGameVars(json &msg){
-    msg.at("str") = "Matthew Bouch and Joey Gorski"; // Your author name(s) here
+    msg.at("str") = "Matthew Bouch"; // Your author name(s) here
 }
 

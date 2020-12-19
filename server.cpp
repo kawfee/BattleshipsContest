@@ -113,7 +113,6 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
 
     
     ofstream log_stream("./logs/" + matchFile);
-    log_stream << "Starting games" << endl;
 
 
     // Starting game stuff
@@ -153,7 +152,6 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
         player2=match.player2;
     }
 
-    log_stream << "Ending games" << endl;
     log_stream.close();
 
     c1.kill();
@@ -184,7 +182,7 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
         logging = false;
     }
     if(logging){
-        log_stream << "MATCH_START_ROUND:" << matchNum << endl;
+        log_stream << "MATCH_START_ROUND: " << matchNum << endl;
     }
 
     int totalGameRound=1;
@@ -422,7 +420,7 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                     c1Ships, c2Ships);
 
                 if(logging){
-                    log_stream << "MATCH OVER" << endl;
+                    log_stream << "MATCH_OVER" << endl;
                 }
                 
                 
@@ -656,7 +654,8 @@ void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10
 }
 
 void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream, json msg1, json msg2){
-    log_stream << player1.name << "'s board, by: " << player1.author << endl;
+    log_stream << "Author: " << player1.author << endl
+               << player1.name << "'s board"  << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
             log_stream << c1Board[row][col];
@@ -673,7 +672,8 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     }
     log_stream << ":" << p1Row << "," << p1Col << endl;
     
-    log_stream << player2.name << "'s board, by: " << player2.author << endl;
+    log_stream << "Author: " << player2.author << endl
+               << player2.name << "'s board"  << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
             log_stream << c2Board[row][col];
