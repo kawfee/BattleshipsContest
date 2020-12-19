@@ -26,23 +26,32 @@ using namespace conio;
 int main(){
     
 
-    // regex round_start("^MATCH_START_ROUND:.*");
+    regex match_start("^MATCH_START_ROUND:.*");
+    regex board_info("^[XOKS~]{10}");
+    regex match_end("^MATCH_OVER");
 
-    // //cout << clrscr();
+    cout << clrscr() << flush;
 
-    // string line;
-    // ifstream log_file ("logs/client_vs_client_auto.log");
+    string line;
+    ifstream log_file ("logs/client_vs_client_auto.log");
     
-    // if(log_file.is_open()){
-    //     while(getline (log_file,line)){
-    //         if(regex_match(line, round_start)){
-    //             cout << "There was a beginning of a match!" << endl;
-    //             cout << "Match Number: " << extractIntegerWords(line) << endl;
-    //         }
-    //     }
+    if(log_file.is_open()){
+        while(getline (log_file,line)){
+            if(regex_match(line, match_start)){
+                cout << "There was a beginning of a match!" << endl;
+                cout << "Match Number: " << extractIntegerWords(line) << endl;
+            }else if(regex_match(line, match_end)){
+                cout << "Match ended!" << endl;
+            }else if(regex_match(line, board_info)){
+                cout << "Found board!" << endl;
+            }else{
+                cout << "Found other. :(" << endl;
+            }
 
-    //     log_file.close();
-    // }
+        }
+
+        log_file.close();
+    }
 
     return 0;
 }
