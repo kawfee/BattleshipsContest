@@ -320,9 +320,18 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
 
             
             //do dead ship checking 
-            int p1DeadShip = findDeadShip(numShips, c1Ships, savedMsg, c1Board);
-            int p2DeadShip = findDeadShip(numShips, c2Ships, msg, c2Board);
+            json deadShipMsg = {
+                {"messageType", msg.at("messageType")},
+                {"row", msg.at("row")},
+                {"col", msg.at("col")},
+                {"str", msg.at("str")},
+                {"dir", msg.at("dir")},
+                {"length", msg.at("length")},
+                {"client", msg.at("client")},
+                {"count", msg.at("count")}
+            }; 
 
+            int p1DeadShip = findDeadShip(numShips, c1Ships, deadShipMsg, c1Board);
             if(p1DeadShip>=0){
                 json currShip = c1Ships[p1DeadShip];
 
@@ -340,6 +349,8 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
             }
+
+            int p2DeadShip = findDeadShip(numShips, c2Ships, deadShipMsg, c2Board);
             if(p2DeadShip>=0){
                 json currShip = c2Ships[p2DeadShip];
 
@@ -357,6 +368,7 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                     c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                     c1Ships, c2Ships);
             }
+            
             //do error checking part two, electric baloogaloo
             if(!p1Result && !p2Result){
                 // return no winner
@@ -654,7 +666,7 @@ void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10
 }
 
 void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream, json msg1, json msg2){
-    log_stream << "Author: " << player1.author << endl
+    log_stream << player1.author << endl
                << player1.name << "'s board"  << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
@@ -664,15 +676,15 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     }
     int p1Row = msg1.at("row");
     int p1Col = msg1.at("col");
-    log_stream << player2.name << "'s "; 
+    log_stream << player1.name << "'s "; 
     if (c2Board[p1Row][p1Col] == HIT){
-        log_stream << "HIT";
+        log_stream << "HIT:  ";
     }else {
-        log_stream << "MISS";
+        log_stream << "MISS: ";
     }
-    log_stream << ":" << p1Row << "," << p1Col << endl;
+    log_stream << p1Row << "," << p1Col << endl;
     
-    log_stream << "Author: " << player2.author << endl
+    log_stream << player2.author << endl
                << player2.name << "'s board"  << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
@@ -682,13 +694,13 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     }
     int p2Row = msg2.at("row");
     int p2Col = msg2.at("col");
-    log_stream << player1.name << "'s ";
-    if(c1Board[p2Row][p2Col] == HIT){
-        log_stream << "HIT";
+    log_stream << player2.name << "'s ";
+    if(c1Board[p2Row][p2Col] == HIT || c1Board[p2Row][p2Col] == KILL){
+        log_stream << "HIT:  ";
     }else{
-        log_stream << "MISS";
+        log_stream << "MISS: ";
     }
-    log_stream << ":" << p2Row << "," << p2Col << endl;
+    log_stream << p2Row << "," << p2Col << endl;
 }
 
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg, int (&shipLengths)[6],
