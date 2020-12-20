@@ -124,8 +124,13 @@ int main(){
 
                 cout << gotoRowCol(19, 50) << currentState[12] << endl;
 
-
-                sleep(1);
+                cout << gotoRowCol(21, 1);
+                char temp = cin.get();
+                cin.clear();
+                fflush(stdin);
+                cout << gotoRowCol(21, 1) << "                                                   ";
+                cout << gotoRowCol(22, 1) << "Temp: " << temp << endl;
+                //sleep(1);
             }
 
         }
