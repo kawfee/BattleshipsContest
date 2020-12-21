@@ -1,5 +1,5 @@
-CXXFLAGS= -std=c++11 -Wall
-ALLOBJECTS= client client_auto client_manual controller
+CXXFLAGS = -Og -std=c++11 -Wall -g -pg -no-pie -fno-builtin
+LDFLAGS  = -pg
 
 # is this /* working? 
 object_files: client client_auto client_manual controller
@@ -16,3 +16,13 @@ move:
 
 clean:
 	rm -f ./AI_Executables/client ./AI_Executables/client_auto ./AI_Executables/client_manual controller ais.txt
+
+
+
+# CXXFLAGS = -Og -Wall -g -pg -no-pie -fno-builtin
+# LDFLAGS = -pg
+
+# g++ $(CXXFLAGS) -o $(EXEC) $(OBJ) $(LDFLAGS)
+
+# profile:
+#         gprof infectsim | more

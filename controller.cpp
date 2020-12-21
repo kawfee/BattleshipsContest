@@ -48,7 +48,7 @@ int main(){
     }
     
     regex int_expr("^[0-9]+$");
-    regex doub_expr("^[0-9]*+\.[0-9]+$");
+    regex doub_expr("^[0-9]*\.[0-9]+$");
 
     string gameType = "";
     int numGames    = 500;
