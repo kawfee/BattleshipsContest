@@ -1,4 +1,4 @@
-CXXFLAGS = -Og -std=c++11 -Wall -g -pg -no-pie -fno-builtin
+CXXFLAGS = -Og -std=c++11 -Wall -g -no-pie -fno-builtin
 LDFLAGS  = -pg
 
 # is this /* working? 
@@ -14,8 +14,19 @@ controller: controller.cpp
 move:
 	make; mv client AI_Executables; mv client_auto AI_Executables; mv client_manual AI_Executables;
 
+controller:
+	g++ $(CXXFLAGS) -o controller controller.cpp $(LDFLAGS)
+
 clean:
 	rm -f ./AI_Executables/client ./AI_Executables/client_auto ./AI_Executables/client_manual controller ais.txt
+
+
+
+
+
+
+
+
 
 
 
