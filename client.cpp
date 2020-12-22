@@ -18,6 +18,7 @@
 
 #include "json.hpp"
 #include "defines.h"
+#include "socket_defs.h"
 
 using namespace std;
 using json=nlohmann::json;
@@ -29,38 +30,21 @@ void shootShot(json &msg, char shotBoard[10][10], int boardSize);
 void shotReturned(json &msg);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 void sendGameVars(json &msg);
+int socketConnect(int sock, const char *socket_name);
+int socketOpen(const char *socket_name);
+void socketClose(int sock);
 
 
 int main(int argc, char *argv[]){
     srand(getpid());
     string clientID = to_string(getpid());
 
-    const char *serverIp = "localhost"; int port = 54321;
+    //setup a socket and connection tools
+    const char *path = "./serversocket";
+    int clientSd = socketOpen(path);
 
     //create a message buffer
     char buffer[1500];
-
-    //setup a socket and connection tools
-    struct hostent* host = gethostbyname(serverIp);
-    sockaddr_in sendSockAddr;
-
-    bzero((char*)&sendSockAddr, sizeof(sendSockAddr));
-
-    sendSockAddr.sin_family = AF_INET;
-    sendSockAddr.sin_addr.s_addr =
-        inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
-    sendSockAddr.sin_port = htons(port);
-
-    int clientSd = socket(AF_INET, SOCK_STREAM, 0);
-
-    //try to connect...
-    int status = connect(clientSd,
-                         (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
-    if(status < 0){
-        cerr<<"Error connecting client to socket!"<<endl;
-    }else{
-        cout << "Connected client to the server!" << endl;
-    }
 
     //declare variables for during the game
     int round=0;
@@ -77,7 +61,8 @@ int main(int argc, char *argv[]){
         //read
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
-        recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
+        //recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
+        read( clientSd , buffer, 1499);
 
         string tempStr="";
         tempStr.append(buffer);
@@ -103,10 +88,13 @@ int main(int argc, char *argv[]){
 }
 
 void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize){
-    
     if(msg.at("messageType")=="setupGame"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         sendGameVars(msg);
     }else if(msg.at("messageType")=="matchOver"){
+        msg.at("client") = clientID;
+        msg.at("count") = round;
         wipeBoards(shipBoard, shotBoard, boardSize);
     }else if(msg.at("messageType")=="placeShip"){
         msg.at("client") = clientID;
@@ -190,6 +178,45 @@ void shotReturned(json &msg){
 }
 
 void sendGameVars(json &msg){
-    msg.at("str") = "Matthew Bouch"; // Your author name(s) here
+    msg.at("str") = "Joey Gorski"; // Your author name(s) here
 }
 
+
+
+
+
+
+
+
+
+
+int socketConnect(int sock, const char *socket_name){
+    struct sockaddr_un address;
+
+    memset(&address, 0x00, sizeof(address));
+    address.sun_family = AF_UNIX;
+    strncpy(address.sun_path, socket_name, SOCKET_NAME_MAX_LEN);
+
+    return connect(sock, (struct sockaddr *)&address, sizeof(address));
+}
+
+int socketOpen(const char *socket_name){
+    int res;
+
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0)
+        return -1;
+
+    res = socketConnect(sock, socket_name);
+    if (res < 0) {
+        close(sock);
+        return res;
+    }
+    
+    return sock;
+}
+
+void socketClose(int sock){
+    if (sock > 0)
+        close(sock);
+}

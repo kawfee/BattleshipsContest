@@ -6,6 +6,7 @@
     Code help for using and setting up sockets
         https://simpledevcode.wordpress.com/2016/06/16/client-server-chat-in-c-using-sockets/
         https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+        https://github.com/amnonpaz/unix_sockets
 
     Github libraries:
         https://github.com/kawfee/BattleshipsContest
@@ -30,7 +31,9 @@
 
 #include "json.hpp"
 #include "subprocess.hpp"
+
 #include "defines.h"
+#include "socket_defs.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -41,19 +44,21 @@ using json = nlohmann::json;
 using namespace subprocess;
 
 
-
-void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen);
-void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &sdTurn, int &countConnected);
-int masterSocketConnection(fd_set &readfds, int &master_socket, int &max_sd, int &activity, int &new_socket, sockaddr_in &address,
-            int &addrlen, json &msg, int &max_clients, int (&client_socket)[30], int &i, int &countConnected);
-void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &address, int &addrlen, json &msg, int &max_clients,
+int bind_address(int sock, const char *path);
+int create_socket(const char *path);
+void destroy_socket(int sock, const char *path);
+void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_un &address, int &i, int &addrlen, const char *path);
+void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &countConnected);
+int masterSocketConnection(fd_set &readfds, int &master_socket, int &max_sd, int &activity, int &new_socket, sockaddr_un &address,
+            int &addrlen, int &max_clients, int (&client_socket)[30], int &i, int &countConnected);
+void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_un &address, int &addrlen, int &max_clients,
             int (&client_socket)[30], int &i, int &countConnected);
-void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &dConnect);
+void childDisconnect(int &sd, sockaddr_un &address, int &addrlen, int (&client_socket)[30], int &dConnect);
 void childParse(string &clientStr, json &clientResponse, int &valread, char (&buffer)[1500]);
 void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10][10], char c2Board[10][10]);
 void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream, json msg1, json msg2);
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
-            int (&shipLengths)[6], char (&buffer)[1500], int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30],
+            int (&shipLengths)[6], char (&buffer)[1500], int &activity, sockaddr_un address, int &addrlen, int (&client_socket)[30],
             int &dConnect, Popen &c, int &valread, string &clientStr, json &clientResponse, string currentClient, char c1Board[10][10],
             char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound,
             json (&c1Ships)[6], json (&c2Ships)[6]);
@@ -62,21 +67,23 @@ char shootShot(char board[10][10] , int boardSize, int row, int col);
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]);
 int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]);
 bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
-            int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
+            int &activity, sockaddr_un address, int &addrlen, int (&client_socket)[30], int &dConnect,
             Popen &c, int &valread);
 GameInfo runMatch(Player player1, Player player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
-    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream);
+    int max_sd, int dConnect, int countConnected, sockaddr_un address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream);
 
 
 
 int runGame(int numGames, Player &player1, Player &player2, int boardSize, string matchFile){
     //setup socket functionality
     //create the server variables
+    const char *path = "./serversocket";
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
         max_clients=2 , activity, i , valread=1 , sd, max_sd,
         dConnect=0, countConnected=0;
-    struct sockaddr_in address;
+    //struct sockaddr_un address;
+    struct sockaddr_un  address;
     //set of socket descriptors
     fd_set readfds;
 
@@ -91,21 +98,22 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
         {"count", 0}
     };
 
-    setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen);
+    setupServer(max_clients, client_socket, sd, master_socket, opt, address, i, addrlen, path);
 
     auto c1 = Popen({"./AI_Executables/"+player1.name});
     masterSocketConnection(readfds, master_socket, max_sd, activity,
-        new_socket, address, addrlen, gameMsg,
+        new_socket, address, addrlen,
         max_clients, client_socket, i, countConnected);
 
     auto c2 = Popen({"./AI_Executables/"+player2.name});
     masterSocketConnection(readfds, master_socket, max_sd, activity,
-        new_socket, address, addrlen, gameMsg,
+        new_socket, address, addrlen,
         max_clients, client_socket, i, countConnected);
 
     sendReceive(player1, readfds, master_socket, max_sd, client_socket[0], countConnected, gameMsg,
         activity, address, addrlen, client_socket, dConnect,
         c1, valread);
+
 
     sendReceive(player2, readfds, master_socket, max_sd, client_socket[1], countConnected, gameMsg,
         activity, address, addrlen, client_socket, dConnect,
@@ -159,13 +167,15 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
     childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
     childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
 
+    destroy_socket(master_socket, path);
+
 
     return 1;
 }
 
 
 GameInfo runMatch(Player player1, Player player2, int boardSize, int master_socket, int addrlen, int (&client_socket)[30], int activity, int valread, int sd,
-    int max_sd, int dConnect, int countConnected, sockaddr_in address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream){
+    int max_sd, int dConnect, int countConnected, sockaddr_un address, fd_set readfds, Popen &c1, Popen &c2, int numGames, int matchNum, ofstream &log_stream){
     GameInfo temp;
     temp.player1 = player1;
     temp.player2 = player2;
@@ -249,6 +259,7 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
         //     -The first string in performAction makes the decision for performAction of what action to take.
 
         //     -findDeadShip is suspect in its workability--give it a once-over before starting to work on the rest.
+
         
         if(totalGameRound <= 6){
             // for the sd for performAction, pass client_socket[0] or client_socket[1] seperately
@@ -478,23 +489,82 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
 
 
 
+/**
+ * bind_address: Bind a path to a socket
+ *
+ * Returns: Fail/Pass
+ */
+int bind_address(int sock, const char *path){
+    struct sockaddr_un addr;
 
+    memset(&addr, 0x00, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 
+    return bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+}
 
+/**
+ * create_socket: Create a new Unix-domain soket,
+ * clear the desired path and bind the socket to
+ * the path.
+ *
+ * Returns: Fail/Pass
+ */
+int create_socket(const char *path){
+    int res;
 
-void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_in &address, int &i, int &addrlen){
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0) {
+        LOGE("Failed creating a new socket");
+        return sock;
+    }
+
+    /* Clearing the path, in case the last 
+       execution didn't terminate properly */
+    unlink(path);
+
+    res = bind_address(sock, path);
+    if (res < 0) {
+        LOGE("Failed binding socket to %s (%d: %s)",
+             path, errno, strerror(errno));
+        goto bind_error;
+    }
+
+    res = listen(sock, 2);
+    if (res < 0) {
+        LOGE("Failed listening on socket (%d: %s)", errno, strerror(errno));
+        goto listen_error;
+    }
+
+    return sock;
+
+    listen_error:
+        unlink(path);
+    bind_error:
+        close(sock);
+
+    return res;
+}
+
+/**
+ * destroy_socket: Close the socket and clear
+ * the path
+ */
+void destroy_socket(int sock, const char *path){
+    close(sock);
+    unlink(path);
+}
+
+void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &master_socket, int &opt, sockaddr_un &address, int &i, int &addrlen, const char *path){
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
     {
-        client_socket[i] = 0;
+        client_socket[i] = -1;
     }
 
     //create a master socket
-    if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
-    {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
+    master_socket = create_socket(path);
 
     //set master socket to allow multiple connections ,
     //this is just a good habit, it will work without this
@@ -505,27 +575,12 @@ void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &maste
         exit(EXIT_FAILURE);
     }
 
-    //type of socket created
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons( PORT );
-
-    //bind the socket to localhost port 54321
-    if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0)
-    {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Listener on port %d \n", PORT);
-
     //try to specify maximum of 3 pending connections for the master socket
     if (listen(master_socket, 3) < 0){
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    //accept the incoming connection
-    addrlen = sizeof(address);
     puts("Waiting for connections ...");
 }
 
@@ -540,16 +595,18 @@ void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int 
     //socket descriptor
 
     //if valid socket descriptor then add to read list
-    if(sd > 0)
+    if(sd > 0){
         FD_SET( sd , &readfds);
+    }
 
     //highest file descriptor number, need it for the select function
-    if(sd > max_sd)
+    if(sd > max_sd){
         max_sd = sd;
+    }
 }
 
 int masterSocketConnection(fd_set &readfds, int &master_socket, int &max_sd, int &activity,
-            int &new_socket, sockaddr_in &address, int &addrlen, json &msg,
+            int &new_socket, sockaddr_un &address, int &addrlen,
             int &max_clients, int (&client_socket)[30], int &i, int &countConnected){
     //clear the socket set
     FD_ZERO(&readfds);
@@ -571,29 +628,30 @@ int masterSocketConnection(fd_set &readfds, int &master_socket, int &max_sd, int
     //MASTER_SOCKET IS TOUCHED
     if (FD_ISSET(master_socket, &readfds)){
         //this adds new connections to the client_socket array when master socket is modified/accessed
-        masterSocketTouched(new_socket, master_socket, address, addrlen, msg, max_clients, client_socket, i, countConnected);
+        masterSocketTouched(new_socket, master_socket, address, addrlen, max_clients, client_socket, i, countConnected);
     }
 
     return 1;
 }
 
-void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &address, int &addrlen,
-            json &msg, int &max_clients, int (&client_socket)[30], int &i, int &countConnected){
-    if ((new_socket = accept(master_socket,(struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-    {
+void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_un &address, int &addrlen,
+            int &max_clients, int (&client_socket)[30], int &i, int &countConnected){
+
+    int t = sizeof(address);
+    if((new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t*)&t))<0){
         perror("accept");
         exit(EXIT_FAILURE);
     }
 
     //inform user of socket number - used in send and receive commands
-    printf("New connection , sid is %d , ip is : %s , port : %d  \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    printf("New connection , sid is %d\n", new_socket);
 
 
     //add new socket to array of sockets
     for (i = 0; i < max_clients; i++)
     {
         //if position is empty
-        if( client_socket[i] == 0 )
+        if( client_socket[i] == -1 )
         {
             client_socket[i] = new_socket;
             printf("Adding to list of sockets in position %d\n" , i);
@@ -605,12 +663,12 @@ void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_in &addre
     countConnected++;
 }
 
-void childDisconnect(int &sd, sockaddr_in &address, int &addrlen, int (&client_socket)[30], int &dConnect){
-    getpeername(sd , (struct sockaddr*)&address, (socklen_t*)&addrlen);
-    printf("Socket %d disconnected , ip %s , port %d \n", sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+void childDisconnect(int &sd, sockaddr_un &address, int &addrlen, int (&client_socket)[30], int &dConnect){
+    getpeername(sd , NULL, NULL);
+    //printf("Socket %d disconnected , ip %s , port %d \n", sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
     //Close the socket and mark as 0 in list for reuse
-    close( sd );
+    close( sd);
 
     if(client_socket[0]==sd){
         client_socket[0] = (int)0;
@@ -704,7 +762,7 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
 }
 
 bool performAction(string messageType, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg, int (&shipLengths)[6],
-            char (&buffer)[1500], int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
+            char (&buffer)[1500], int &activity, sockaddr_un address, int &addrlen, int (&client_socket)[30], int &dConnect,
             Popen &c, int &valread, string &clientStr, json &clientResponse, string currentClient, char c1Board[10][10],
             char c2Board[10][10], char c1ShipBoard[10][10], char c2ShipBoard[10][10], int &boardSize, int totalGameRound, json (&c1Ships)[6], json (&c2Ships)[6]){
     //prepare the sockets for the connection
@@ -809,7 +867,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             }
 
             if(msg.at("messageType")!="matchOver"){
-                // printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
+                //printAll(sd, clientStr, msg, boardSize, c1Board, c2Board);
             }
 
         }//FD_ISSET
@@ -950,20 +1008,27 @@ int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
 }
 
 bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_sd, int sd, int &countConnected, json &msg,
-            int &activity, sockaddr_in address, int &addrlen, int (&client_socket)[30], int &dConnect,
+            int &activity, sockaddr_un address, int &addrlen, int (&client_socket)[30], int &dConnect,
             Popen &c, int &valread){
     //prepare the sockets for the connection
+
+
     prepSockets(readfds, master_socket, max_sd, sd, countConnected);
-    
+
+
     char buffer[1500];
 
     strcpy(buffer, msg.dump().c_str());
     send(sd , buffer , strlen(buffer) , 0 );
 
+    
+
+    fd_set otherfds = readfds;
     //wait at the sockets for a change,
     //if it takes longer than timeval tv the process is killed and activity gets a value less then 0.
-    struct timeval tv = {0, 500000}; // Half a second
-    activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
+    struct timeval tv = {0, 500000}; // Half a second = 500000
+    //activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
+    activity = select( max_sd + 1 , &otherfds , NULL , NULL , &tv);
 
 
     // Handles a timeout error from the above select statement
@@ -973,6 +1038,7 @@ bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_s
         childDisconnect(sd, address, addrlen, client_socket, dConnect);
         return false;
     }
+
 
     // If everything worked when setting up sockets
     if(FD_ISSET(sd, &readfds)){
@@ -995,5 +1061,6 @@ bool sendReceive(Player &player, fd_set &readfds, int &master_socket, int &max_s
 
         }//FD_ISSET
     }
+    
     return true;
 }

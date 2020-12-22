@@ -84,7 +84,9 @@ int main(){
         if (regex_match(temp, int_expr)){
             watchAll = stoi(temp);    
         }
-
+        if(watchAll){
+            //this does nothing--it's just to prevent a warning from popping up.
+        }
 
         cout << "Should the game run via time delay or directed input? [(1:delay), 2:input] ";
         getline(cin, temp);
