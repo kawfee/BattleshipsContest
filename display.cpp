@@ -6,11 +6,13 @@
 #include <unistd.h>
 
 
+#include "defines.h"
 #include "conio.cpp"
 #include "conio.h"
 
 int extractInteger(string str);
 std::ifstream& GotoLine(std::ifstream& file, unsigned int num);
+void printBoard(string currentState[30], int boardChoice);
 
 /*
     string gotoRowCol( const int x, const int y );
@@ -68,23 +70,27 @@ int main(){
          << gotoRowCol(16, 50) << "I|~~~~~~~~~~" << endl
          << gotoRowCol(17, 50) << "J|~~~~~~~~~~" << endl;
     
+    int file_line = 0;
+
     if(log_file.is_open()){
         while(getline (log_file,line)){
+            file_line++;
             if(regex_match(line, match_start)){
                 //cout << "There was a beginning of a match!" << endl;
                 cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
                 // sleep(1);
             }else if(regex_match(line, match_end)){
                 cout << gotoRowCol(1,1) << "Match Ended!" << endl;
-                sleep(1);
+                // sleep(1);
             }else{
                 //author            [0]     [13]
-                //client's board    [1]     [14]
+                //client's board    [1]     [14] 
                 //board x10         [2-11]  [15-24]
                 //client's shot     [25]    [12]
 
                 string currentState[30];
                 currentState[0] = line;
+                
                 for (int i=1; i < 26; i++){
                     getline(log_file, line);
                     currentState[i] = line;
@@ -92,35 +98,17 @@ int main(){
 
                 cout << gotoRowCol(3, 1) << currentState[0] << endl;
                 cout << gotoRowCol(4, 1) << currentState[1] << endl;
+                
+                printBoard(currentState, 1);
 
-                // handle the board
-                cout << gotoRowCol(8, 3)  << currentState[2]  << endl;
-                cout << gotoRowCol(9, 3)  << currentState[3]  << endl;
-                cout << gotoRowCol(10, 3) << currentState[4]  << endl;
-                cout << gotoRowCol(11, 3) << currentState[5]  << endl;
-                cout << gotoRowCol(12, 3) << currentState[6]  << endl;
-                cout << gotoRowCol(13, 3) << currentState[7]  << endl;
-                cout << gotoRowCol(14, 3) << currentState[8]  << endl;
-                cout << gotoRowCol(15, 3) << currentState[9]  << endl;
-                cout << gotoRowCol(16, 3) << currentState[10] << endl;
-                cout << gotoRowCol(17, 3) << currentState[11] << endl;
-
+                cout << gotoRowCol(19, 1) << "                                                                                                                   ";
                 cout << gotoRowCol(19, 1) << currentState[25] << endl;
+                
 
                 cout << gotoRowCol(3, 50) << currentState[13] << endl;
                 cout << gotoRowCol(4, 50) << currentState[14] << endl;
 
-                // handle the board
-                cout << gotoRowCol(8, 52)  << currentState[15]  << endl;
-                cout << gotoRowCol(9, 52)  << currentState[16]  << endl;
-                cout << gotoRowCol(10, 52) << currentState[17]  << endl;
-                cout << gotoRowCol(11, 52) << currentState[18]  << endl;
-                cout << gotoRowCol(12, 52) << currentState[19]  << endl;
-                cout << gotoRowCol(13, 52) << currentState[20]  << endl;
-                cout << gotoRowCol(14, 52) << currentState[21]  << endl;
-                cout << gotoRowCol(15, 52) << currentState[22]  << endl;
-                cout << gotoRowCol(16, 52) << currentState[23] << endl;
-                cout << gotoRowCol(17, 52) << currentState[24] << endl;
+                printBoard(currentState, 2);
 
                 cout << gotoRowCol(19, 50) << currentState[12] << endl;
 
@@ -129,8 +117,14 @@ int main(){
                 cin.clear();
                 fflush(stdin);
                 // This next line is for clearing the input to blank
-                cout << gotoRowCol(21, 1) << "                                                               ";
+                cout << gotoRowCol(21, 1) << "                                                                                                                   ";
                 cout << gotoRowCol(22, 1) << "Temp: " << temp << endl;
+                if(temp == 'b' || temp == 'r'){
+                    file_line -= 28;
+                    GotoLine(log_file, file_line);
+                }
+
+                file_line += 26;
                 //sleep(1);
             }
 
@@ -177,6 +171,106 @@ std::ifstream& GotoLine(std::ifstream& file, unsigned int num){
     return file;
 }
 
+void printBoard(string currentState[30], int boardChoice){
+    if(boardChoice==1){
+        int pos = currentState[25].find(":");
+        int currRow = (currentState[25])[pos+2]-48;
+        int currCol = (currentState[25])[pos+4]-48;
+
+        cout << gotoRowCol(25, 1)
+             << "currRow: " << currRow << endl 
+             << "currCol: " << currCol << endl;
+
+        for (int row = 2; row < 12; row++){
+            cout << gotoRowCol(row+6, 3); 
+            for(int col=0; col < 10; col++){
+                char ch = (currentState[row])[col];
+                if(ch == WATER || ch == SHIP){ 
+                    if(row-2==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(CYAN);
+                    }else{
+                        cout << bgColor(CYAN) << fgColor(BLACK);
+                    }
+                    cout << WATER << flush;
+                }else if(ch == HIT){
+                    if(row-2==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(LIGHT_MAGENTA);
+                    }else{
+                        cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else if(ch == MISS){
+                    if(row-2==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(GRAY);
+                    }else{
+                        cout << bgColor(GRAY) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else if(ch == KILL){
+                    if(row-2==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(RED);
+                    }else{
+                        cout << bgColor(RED) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else{
+                    cout << bgColor(RESET) << fgColor(WHITE) << ch << flush;
+                }
+            }
+            cout << endl;
+        }
+        cout << bgColor(RESET) << fgColor(WHITE);
+    }else{
+        int pos = currentState[12].find(":");
+        int currRow = (currentState[12])[pos+2]-48;
+        int currCol = (currentState[12])[pos+4]-48;
+
+        cout << gotoRowCol(25, 52)
+             << "currRow: " << currRow << gotoRowCol(26, 52) 
+             << "currCol: " << currCol << endl;
+
+        for (int row = 15; row < 25; row++){
+            cout << gotoRowCol(row-7, 52); 
+            for(int col=0; col < 10; col++){
+                char ch = (currentState[row])[col];
+                if(ch == WATER || ch == SHIP){ 
+                    if(row-15==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(CYAN);
+                    }else{
+                        cout << bgColor(CYAN) << fgColor(BLACK);
+                    }
+                    cout << WATER << flush;
+                }else if(ch == HIT){
+                    if(row-15==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(LIGHT_MAGENTA);
+                    }else{
+                        cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else if(ch == KILL){
+                    if(row-15==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(RED);
+                    }else{
+                        cout << bgColor(RED) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else if(ch == MISS){
+                    if(row-15==currRow && col==currCol){
+                        cout << bgColor(BLACK) << fgColor(GRAY);
+                    }else{
+                        cout << bgColor(GRAY) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else{
+                    cout << bgColor(RESET) << fgColor(WHITE) << ch << flush;
+                }
+            }
+            cout << endl;
+        }
+        cout << bgColor(RESET) << fgColor(WHITE);
+    }
+    
+}
 
 /*
     Currently we go line by line through file and change data as necessary when we print.

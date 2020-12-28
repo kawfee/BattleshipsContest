@@ -735,8 +735,8 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     int p1Row = msg1.at("row");
     int p1Col = msg1.at("col");
     log_stream << player1.name << "'s "; 
-    if (c2Board[p1Row][p1Col] == HIT){
-        log_stream << "HIT:  ";
+    if (c2Board[p1Row][p1Col] == HIT || c2Board[p1Row][p1Col] == KILL){
+        log_stream << "HIT: ";
     }else {
         log_stream << "MISS: ";
     }
@@ -754,7 +754,7 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     int p2Col = msg2.at("col");
     log_stream << player2.name << "'s ";
     if(c1Board[p2Row][p2Col] == HIT || c1Board[p2Row][p2Col] == KILL){
-        log_stream << "HIT:  ";
+        log_stream << "HIT: ";
     }else{
         log_stream << "MISS: ";
     }

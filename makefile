@@ -1,7 +1,7 @@
 #CXXFLAGS = -Og -std=c++11 -Wall -g -no-pie -fno-builtin
 #LDFLAGS  = -pg
 
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -std=c++11 -Wall -O3
 
 object_files: client client_auto controller
 client_auto: client_auto.cpp

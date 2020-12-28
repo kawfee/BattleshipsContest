@@ -2,6 +2,8 @@
 # Problem I encountered make sure you have LF end of line sequence for the file otherwise you may encounter an issue.
 # Also doesn't need to be a .py file but doing that for github file tpying.
 
+# Deprecated
+
 # Grabbing some constants similar to defines.h
 # Shot related
 SHOT = '@'
@@ -59,7 +61,7 @@ def messageHandler(msg):
 
 
 def main():
-    # Initialize socket connection
+    # Initialize socket connection FIX THIS GARBAGE
     sock = socket.socket()
     host = socket.gethostname()
     port = 54321
