@@ -70,19 +70,23 @@ int main(){
          << gotoRowCol(16, 50) << "I|~~~~~~~~~~" << endl
          << gotoRowCol(17, 50) << "J|~~~~~~~~~~" << endl;
     
-    int file_line = 0;
+    int file_line = 1;
+    int min_file_line = -1;
 
     if(log_file.is_open()){
         while(getline (log_file,line)){
             file_line++;
             if(regex_match(line, match_start)){
                 //cout << "There was a beginning of a match!" << endl;
+                cout << clrscr() << flush;
                 cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
+                min_file_line = file_line;
                 // sleep(1);
             }else if(regex_match(line, match_end)){
                 cout << gotoRowCol(1,1) << "Match Ended!" << endl;
                 // sleep(1);
             }else{
+                cout << gotoRowCol(30,1) << "file_line: " << file_line << "                                                               " << endl;
                 //author            [0]     [13]
                 //client's board    [1]     [14] 
                 //board x10         [2-11]  [15-24]
@@ -113,18 +117,33 @@ int main(){
                 cout << gotoRowCol(19, 50) << currentState[12] << endl;
 
                 cout << gotoRowCol(21, 1);
-                char temp = cin.get();
-                cin.clear();
-                fflush(stdin);
+
+                char temp;
+                //getline(cin, temp_str);
+                temp = cin.get();
+                //char temp = temp_str[0];
+                //char temp[] = cin.get();
+                //cin.clear();
+                if(temp != '\n'){
+                    cin.ignore(1024, '\n');
+                }
+                //fflush(stdin);
                 // This next line is for clearing the input to blank
                 cout << gotoRowCol(21, 1) << "                                                                                                                   ";
                 cout << gotoRowCol(22, 1) << "Temp: " << temp << endl;
                 if(temp == 'b' || temp == 'r'){
-                    file_line -= 28;
-                    GotoLine(log_file, file_line);
+                    int test = file_line - 27;
+                    if(test < min_file_line){
+                        file_line -= 1;
+                        cout << gotoRowCol(30,1) << "Can't go to line; you are too far back. New File Line: " << file_line << endl;
+                    }else{
+                        file_line -= 27;
+                        GotoLine(log_file, file_line);
+                        cout << gotoRowCol(30,1) << "Went to file_line: " << file_line << "                                                                                    " << endl;
+                    }
+                }else {
+                    file_line += 25;
                 }
-
-                file_line += 26;
                 //sleep(1);
             }
 
