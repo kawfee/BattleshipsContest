@@ -10,9 +10,23 @@
 #include "conio.cpp"
 #include "conio.h"
 
-int extractInteger(string str);
-std::ifstream& GotoLine(std::ifstream& file, unsigned int num);
-void printBoard(string currentState[30], int boardChoice);
+//structs
+struct playerData{
+    string name    = "eat";
+    string author  = "pant";
+    string board[10];
+    string shot    = "first";
+    bool   won     = false;
+};
+
+struct turnStruct{
+    playerData player1;
+    playerData player2;
+};
+
+void displayTurn(turnStruct turnData, bool endDisplay);
+int  extractInteger(string str);
+void printBoard(turnStruct turn, int boardChoice, bool endDisplay);
 
 /*
     string gotoRowCol( const int x, const int y );
@@ -23,19 +37,7 @@ void printBoard(string currentState[30], int boardChoice);
     string clrscr();
 */
 
-//structs
 
-struct playerData{
-    string name;
-    string author;
-    char board[10][10];
-    string shot_by;
-};
-
-struct turnStruct{
-    playerData player1;
-    playerData player2;
-};
 
 using namespace std;
 using namespace conio;
@@ -43,10 +45,11 @@ using namespace conio;
 int main(){
     
     //Both of these may need to change
-    //map<int, turnStruct> match; 
-    //map<int, map<int, turnStruct>> game; // Hash Map woot
+    map<int, map<int, turnStruct>> matches;  // This maps the 50 matches that were played in the log file.
+    map<int, turnStruct> match;              // This maps the individual turns in a single match. accessing a turn looks like match[x][y]
     int matchIndex = 0;
-    int gameIndex  = 0;
+    int turnIndex  = 0;
+    //cout << "Test['b']: " << test['b'] << endl; // a test for uninitalized value turned up as zero
 
     /*
     for match in matches:
@@ -107,113 +110,129 @@ int main(){
     if(log_file.is_open()){
         while(getline(log_file, line)){
             if(regex_match(line, match_start)){
-                    //cout << "There was a beginning of a match!" << endl;
-                    cout << clrscr() << flush;
-                    cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
-                    map<int, turnStruct> match;
-                    game[gameIndex] = match;
-                    matchIndex = 0;   
+                //cout << "There was a beginning of a match!" << endl;
+                cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
+                map<int, turnStruct> match;
+                matches[matchIndex] = match;
+                turnIndex = 0;
+
             }else if(regex_match(line, match_end)){
-                cout << gotoRowCol(1,1) << "Match Ended!" << endl;
-                gameIndex++;
+                cout << gotoRowCol(1,1) << "Match Ended!                   " << endl;
+                matchIndex++;
             }else{
                 //save match to current game match
 
-                //we have already read in a line--don't forget to save that one into the struct as well
-                //game
-                game[gameIndex][matchIndex]
-                for (int i=1; i < 26; i++){
+                
+                //read in player1
+                matches[matchIndex][turnIndex].player1.author = line;
+                getline(log_file, line);
+                matches[matchIndex][turnIndex].player1.name = line;
+                getline(log_file, line);
+                for(int i=0; i<10; i++){
+                    matches[matchIndex][turnIndex].player1.board[i] = line;
                     getline(log_file, line);
-                    currentState[i] = line;
                 }
+
+                matches[matchIndex][turnIndex].player1.shot = line;
+                getline(log_file, line);
+
+                //start reading in player2
+
+                matches[matchIndex][turnIndex].player2.author = line;
+                getline(log_file, line);
+                matches[matchIndex][turnIndex].player2.name = line;
+                getline(log_file, line);
+                for(int i=0; i<10; i++){
+                    matches[matchIndex][turnIndex].player2.board[i] = line;
+                    getline(log_file, line);
+                }
+
+                matches[matchIndex][turnIndex].player2.shot = line;
+
+                turnIndex++;
             }
         }
     }
 
-    /* 
-        if(log_file.is_open()){
-            while(getline (log_file,line)){
-                file_line++;
-                if(regex_match(line, match_start)){
-                    //cout << "There was a beginning of a match!" << endl;
-                    cout << clrscr() << flush;
-                    cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
-                    min_file_line = file_line;
-                    // sleep(1);
-                }else if(regex_match(line, match_end)){
-                    cout << gotoRowCol(1,1) << "Match Ended!" << endl;
-                    // sleep(1);
-                }else{
-                    cout << gotoRowCol(30,1) << "file_line: " << file_line << "                                                               " << endl;
-                    //author            [0]     [13]
-                    //client's board    [1]     [14] 
-                    //board x10         [2-11]  [15-24]
-                    //client's shot     [25]    [12]
-
-                    string currentState[30];
-                    currentState[0] = line;
-                    
-                    for (int i=1; i < 26; i++){
-                        getline(log_file, line);
-                        currentState[i] = line;
-                    }
-
-                    cout << gotoRowCol(3, 1) << currentState[0] << endl;
-                    cout << gotoRowCol(4, 1) << currentState[1] << endl;
-                    
-                    printBoard(currentState, 1);
-
-                    cout << gotoRowCol(19, 1) << "                                                                                                                   ";
-                    cout << gotoRowCol(19, 1) << currentState[25] << endl;
-                    
-
-                    cout << gotoRowCol(3, 50) << currentState[13] << endl;
-                    cout << gotoRowCol(4, 50) << currentState[14] << endl;
-
-                    printBoard(currentState, 2);
-
-                    cout << gotoRowCol(19, 50) << currentState[12] << endl;
-
-                    cout << gotoRowCol(21, 1);
-
-                    char temp;
-                    //getline(cin, temp_str);
-                    temp = cin.get();
-                    //char temp = temp_str[0];
-                    //char temp[] = cin.get();
-                    //cin.clear();
-                    if(temp != '\n'){
-                        cin.ignore(1024, '\n');
-                    }
-                    //fflush(stdin);
-                    // This next line is for clearing the input to blank
-                    cout << gotoRowCol(21, 1) << "                                                                                                                   ";
-                    cout << gotoRowCol(22, 1) << "Temp: " << temp << endl;
-                    if(temp == 'b' || temp == 'r'){
-                        int test = file_line - 27;
-                        if(test < min_file_line){
-                            file_line -= 1;
-                            cout << gotoRowCol(30,1) << "Can't go to line; you are too far back. New File Line: " << file_line << endl;
-                        }else{
-                            file_line -= 27;
-                            GotoLine(log_file, file_line);
-                            cout << gotoRowCol(30,1) << "Went to file_line: " << file_line << "                                                                                    " << endl;
-                        }
-                    }else {
-                        file_line += 25;
-                    }
-                    //sleep(1);
-                }
-
+    
+    for(int curMatch=0; curMatch<matchIndex+1; curMatch++){
+        int turnsInMatch = matches[curMatch].size();
+        cout << gotoRowCol(1,1) << "Match Number: " << curMatch << endl;
+        cout << gotoRowCol(2,1) << "                                                     " << endl;
+        int turnCount = 0;
+        for( ; turnCount < turnsInMatch; ){
+            displayTurn(matches[curMatch][turnCount], false);
+            // handle input for going back
+            cout << gotoRowCol(21, 1);
+            char temp;
+            temp = cin.get();
+            if(temp != '\n'){
+                cin.ignore(1024, '\n');
             }
-
-            log_file.close();
-        } 
-    */
+            cout << gotoRowCol(21, 1) << "                                                                                                                   ";
+            if(temp == 'b' || temp == 'r'){
+                if(turnCount>0){
+                    turnCount--;
+                }
+            }else{
+                turnCount++;
+            }
+            //sleep(1);
+        }
+        //handle end-game display
+        cout << gotoRowCol(1,1) << "Match Ended!                                       " << endl;
+        displayTurn(matches[curMatch][turnCount-1], true);
+        char temp;
+        temp = cin.get();
+        if(temp != '\n'){
+            cin.ignore(1024, '\n');
+        }
+        //sleep(5);
+    }
 
     return 0;
 }
 
+
+void displayTurn(turnStruct turnData, bool endDisplay){
+    if(!endDisplay){
+        cout << gotoRowCol(3, 1) << turnData.player1.author << endl;
+        cout << gotoRowCol(4, 1) << turnData.player1.name << "'s board                                                                                   " << endl;
+        printBoard(turnData, 1, false);
+        cout << gotoRowCol(19, 1) << "                                                                                                                   ";
+        cout << gotoRowCol(19, 1) << turnData.player2.shot << endl;
+
+        cout << gotoRowCol(3, 50) << turnData.player2.author << endl;
+        cout << gotoRowCol(4, 50) << turnData.player2.name << "'s board                                                                                   " << endl;
+        printBoard(turnData, 2, false);
+        cout << gotoRowCol(19, 50) << "                                                                                                                   ";
+        cout << gotoRowCol(19, 50) << turnData.player1.shot << endl;
+    }else{
+        cout << gotoRowCol(3, 1) << turnData.player1.author << endl;
+        cout << gotoRowCol(4, 1) << "Final Status of " << turnData.player1.name << "'s board" << endl;
+        printBoard(turnData, 1, true);
+        cout << gotoRowCol(19, 1) << "                                                                                                                   ";
+        cout << gotoRowCol(19, 1) << turnData.player2.shot << endl;
+        
+
+        cout << gotoRowCol(3, 50) << turnData.player2.author << endl;
+        cout << gotoRowCol(4, 50) << "Final Status of " << turnData.player2.name << "'s board" << endl;
+        printBoard(turnData, 2, true);
+        cout << gotoRowCol(19, 50) << "                                                                                                                   ";
+        cout << gotoRowCol(19, 50) << turnData.player1.shot << endl;
+
+
+        if(turnData.player1.won && turnData.player2.won){
+            cout << gotoRowCol(25, 1) << "TIE!!!" << endl;
+        }
+        else if(turnData.player1.won){
+            cout << gotoRowCol(25, 1) << turnData.player1.name << " WON!!!" << endl;
+        }else{
+            cout << gotoRowCol(25, 1) << turnData.player2.name << " WON!!!" << endl;
+        }
+    }
+    
+}
 
 
 int extractInteger(string str) { 
@@ -241,51 +260,48 @@ int extractInteger(string str) {
 } 
 
 
-std::ifstream& GotoLine(std::ifstream& file, unsigned int num){
-    file.seekg(std::ios::beg);
-    for(int i=0; i < num - 1; ++i){
-        file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    }
-    return file;
-}
-
-void printBoard(string currentState[30], int boardChoice){
+void printBoard(turnStruct turn, int boardChoice, bool endDisplay){
     if(boardChoice==1){
-        int pos = currentState[25].find(":");
-        int currRow = (currentState[25])[pos+2]-48;
-        int currCol = (currentState[25])[pos+4]-48;
+        int pos = turn.player2.shot.find(":");
+        int currRow = (turn.player2.shot)[pos+2]-48;
+        int currCol = (turn.player2.shot)[pos+4]-48;
 
-        cout << gotoRowCol(25, 1)
-             << "currRow: " << currRow << endl 
-             << "currCol: " << currCol << endl;
-
-        for (int row = 2; row < 12; row++){
-            cout << gotoRowCol(row+6, 3); 
+        for (int row = 0; row < 10; row++){
+            cout << gotoRowCol(row+8, 3); 
             for(int col=0; col < 10; col++){
-                char ch = (currentState[row])[col];
-                if(ch == WATER || ch == SHIP){ 
-                    if(row-2==currRow && col==currCol){
+                char ch = turn.player1.board[row][col];
+                if(ch == WATER || (!endDisplay && ch == SHIP)){ 
+                    if(row==currRow && col==currCol){
                         cout << bgColor(BLACK) << fgColor(CYAN);
                     }else{
                         cout << bgColor(CYAN) << fgColor(BLACK);
                     }
                     cout << WATER << flush;
+                }else if(endDisplay && (ch == SHIP || ch == HIT)){
+                    if(ch == HIT){
+                        cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
+                    }
+                    else if(ch == SHIP){
+                        cout << bgColor(WHITE) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                    turn.player1.won = true;
                 }else if(ch == HIT){
-                    if(row-2==currRow && col==currCol){
+                    if(row==currRow && col==currCol && !endDisplay){
                         cout << bgColor(BLACK) << fgColor(LIGHT_MAGENTA);
                     }else{
                         cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
                     }
                     cout << ch << flush;
                 }else if(ch == MISS){
-                    if(row-2==currRow && col==currCol){
+                    if(row==currRow && col==currCol && !endDisplay){
                         cout << bgColor(BLACK) << fgColor(GRAY);
                     }else{
                         cout << bgColor(GRAY) << fgColor(BLACK);
                     }
                     cout << ch << flush;
                 }else if(ch == KILL){
-                    if(row-2==currRow && col==currCol){
+                    if(row==currRow && col==currCol && !endDisplay){
                         cout << bgColor(BLACK) << fgColor(RED);
                     }else{
                         cout << bgColor(RED) << fgColor(BLACK);
@@ -299,44 +315,49 @@ void printBoard(string currentState[30], int boardChoice){
         }
         cout << bgColor(RESET) << fgColor(WHITE);
     }else{
-        int pos = currentState[12].find(":");
-        int currRow = (currentState[12])[pos+2]-48;
-        int currCol = (currentState[12])[pos+4]-48;
+        int pos = turn.player1.shot.find(":");
+        int currRow = (turn.player1.shot)[pos+2]-48;
+        int currCol = (turn.player1.shot)[pos+4]-48;
 
-        cout << gotoRowCol(25, 52)
-             << "currRow: " << currRow << gotoRowCol(26, 52) 
-             << "currCol: " << currCol << endl;
-
-        for (int row = 15; row < 25; row++){
-            cout << gotoRowCol(row-7, 52); 
+        for (int row = 0; row < 10; row++){
+            cout << gotoRowCol(row+8, 52); 
             for(int col=0; col < 10; col++){
-                char ch = (currentState[row])[col];
-                if(ch == WATER || ch == SHIP){ 
-                    if(row-15==currRow && col==currCol){
+                char ch = turn.player2.board[row][col];
+                if(ch == WATER || (!endDisplay && ch == SHIP)){ 
+                    if(row==currRow && col==currCol){
                         cout << bgColor(BLACK) << fgColor(CYAN);
                     }else{
                         cout << bgColor(CYAN) << fgColor(BLACK);
                     }
                     cout << WATER << flush;
+                }else if(endDisplay && (ch == SHIP || ch == HIT)){
+                    if(ch == HIT){
+                        cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
+                    }
+                    else if(ch == SHIP){
+                        cout << bgColor(WHITE) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                    turn.player2.won = true;
                 }else if(ch == HIT){
-                    if(row-15==currRow && col==currCol){
+                    if(row==currRow && col==currCol && !endDisplay){
                         cout << bgColor(BLACK) << fgColor(LIGHT_MAGENTA);
                     }else{
                         cout << bgColor(LIGHT_MAGENTA) << fgColor(BLACK);
                     }
                     cout << ch << flush;
-                }else if(ch == KILL){
-                    if(row-15==currRow && col==currCol){
-                        cout << bgColor(BLACK) << fgColor(RED);
-                    }else{
-                        cout << bgColor(RED) << fgColor(BLACK);
-                    }
-                    cout << ch << flush;
                 }else if(ch == MISS){
-                    if(row-15==currRow && col==currCol){
+                    if(row==currRow && col==currCol && !endDisplay){
                         cout << bgColor(BLACK) << fgColor(GRAY);
                     }else{
                         cout << bgColor(GRAY) << fgColor(BLACK);
+                    }
+                    cout << ch << flush;
+                }else if(ch == KILL){
+                    if(row==currRow && col==currCol && !endDisplay){
+                        cout << bgColor(BLACK) << fgColor(RED);
+                    }else{
+                        cout << bgColor(RED) << fgColor(BLACK);
                     }
                     cout << ch << flush;
                 }else{

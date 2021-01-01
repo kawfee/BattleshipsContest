@@ -725,7 +725,7 @@ void printAll(int sd, string clientStr, json msg, int boardSize, char c1Board[10
 
 void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player player1, Player player2, ofstream &log_stream, json msg1, json msg2){
     log_stream << player1.author << endl
-               << player1.name << "'s board"  << endl;
+               << player1.name << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
             log_stream << c1Board[row][col];
@@ -743,7 +743,7 @@ void logAll(int boardSize, char c1Board[10][10], char c2Board[10][10], Player pl
     log_stream << p1Row << "," << p1Col << endl;
     
     log_stream << player2.author << endl
-               << player2.name << "'s board"  << endl;
+               << player2.name << endl;
     for(int row=0;row<boardSize;row++){
         for(int col=0;col<boardSize;col++){
             log_stream << c2Board[row][col];
