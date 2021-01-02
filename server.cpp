@@ -80,7 +80,7 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
     const char *path = "./serversocket";
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
-        max_clients=2 , activity, i , valread=1 , sd, max_sd,
+        max_clients=2 , activity, i , valread=1 , sd=0, max_sd,
         dConnect=0, countConnected=0;
     //struct sockaddr_un address;
     struct sockaddr_un  address;
@@ -159,6 +159,9 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
         player1=match.player1;
         player2=match.player2;
     }
+
+    log_stream << player1.name << "'s WIN-LOSS-TIE: " << player1.wins << "-" << player1.losses << "-" << player1.ties << endl;
+    log_stream << player2.name << "'s WIN-LOSS-TIE: " << player2.wins << "-" << player2.losses << "-" << player2.ties << endl;
 
     log_stream.close();
 
@@ -499,7 +502,7 @@ int bind_address(int sock, const char *path){
 
     memset(&addr, 0x00, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+    strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
 
     return bind(sock, (struct sockaddr *)&addr, sizeof(addr));
 }

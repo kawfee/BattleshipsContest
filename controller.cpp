@@ -9,6 +9,7 @@
 
 #include "subprocess.hpp"
 #include "server.cpp"
+#include "display.cpp"
 #include "defines.h"
 
 
@@ -17,6 +18,8 @@ using namespace subprocess;
 
 
 int main(){
+    int waste=0;
+
     time_t t1;
     time_t t2;
     srand(time(NULL));
@@ -29,7 +32,7 @@ int main(){
         call runGame() for those files and do tourney cr-arbage
     */
     Player players[playerCount];
-    system("ls ./AI_Executables > ais.txt");
+    waste=system("ls ./AI_Executables > ais.txt");
     int size = 0;
     string line;
     ifstream ai_file ("ais.txt");
@@ -37,10 +40,10 @@ int main(){
     {
         while ( getline (ai_file,line) )
         {
-            players[size].name = line;
+            players[size].name   = line;
             players[size].author = "";
-            players[size].wins = 0;
-            players[size].ties = 0;
+            players[size].wins   = 0;
+            players[size].ties   = 0;
             players[size].losses = 0;
             size++;
         }
@@ -48,7 +51,7 @@ int main(){
     }
     
     regex int_expr("^[0-9]+$");
-    regex doub_expr("^[0-9]*\.[0-9]+$");
+    regex doub_expr("^[0-9]*\\.[0-9]+$");
 
     string gameType = "";
     int numGames    = 500;
@@ -58,8 +61,8 @@ int main(){
     double delay    = 0.3;
     string temp     = "";
 
-    int aiChoiceOne;
-    int aiChoiceTwo;
+    int aiChoiceOne = 0;
+    int aiChoiceTwo = 0;
 
     cout << "What type of game do you want? [(1:test), 2:competition] ";
     getline(cin, gameType);
@@ -83,9 +86,6 @@ int main(){
         getline(cin, temp);
         if (regex_match(temp, int_expr)){
             watchAll = stoi(temp);    
-        }
-        if(watchAll){
-            //this does nothing--it's just to prevent a warning from popping up.
         }
 
         cout << "Should the game run via time delay or directed input? [(1:delay), 2:input] ";
@@ -123,13 +123,13 @@ int main(){
         string clientNameTwo = players[aiChoiceTwo].name;
 
         cout << "clientNameOne: " << clientNameOne << endl
-            << "clientNameTwo: " << clientNameTwo << endl;
+             << "clientNameTwo: " << clientNameTwo << endl;
 
         string matchFile = clientNameOne + "_vs_" + clientNameTwo + ".log";
         string remove = "rm ./logs/";
         string touch = "touch ./logs/"; 
-        system((remove + matchFile).c_str());
-        system((touch + matchFile).c_str());
+        waste=system((remove + matchFile).c_str());
+        waste=system((touch + matchFile).c_str());
 
         //start game
         cout << "Running matches..." << endl;
@@ -137,28 +137,32 @@ int main(){
         time(&t1);
         cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile) << endl;
         time(&t2);
-        cout << "Matches over." << endl;
         cout << "^^^ Game returned result" << endl;
 
+        display(matchFile, watchAll, runChoice, delay);
+        
         //display final stats
-        cout << players[aiChoiceOne].name 
-             <<" RECORD W-L-T: " 
-             << players[aiChoiceOne].wins << " " 
-             << players[aiChoiceOne].losses << " " 
-             << players[aiChoiceOne].ties 
-             << endl;
-        cout << players[aiChoiceTwo].name 
-             << " RECORD W-L-T: " 
-             << players[aiChoiceTwo].wins << " " 
-             << players[aiChoiceTwo].losses << " " 
-             << players[aiChoiceTwo].ties 
-             << endl;
+        // cout << players[aiChoiceOne].name 
+        //      <<" RECORD W-L-T: " 
+        //      << players[aiChoiceOne].wins << " " 
+        //      << players[aiChoiceOne].losses << " " 
+        //      << players[aiChoiceOne].ties 
+        //      << endl;
+        // cout << players[aiChoiceTwo].name 
+        //      << " RECORD W-L-T: " 
+        //      << players[aiChoiceTwo].wins << " " 
+        //      << players[aiChoiceTwo].losses << " " 
+        //      << players[aiChoiceTwo].ties 
+        //      << endl;
     }
     
     cout << "TIME: " << t2-t1 << endl;
     
     
-    system("rm ais.txt");
+    waste=system("rm ais.txt");
+    if(waste){
+        //do nothing--this is just to stop a warning from popping up.
+    }
     return 0;
 }
 

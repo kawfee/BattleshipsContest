@@ -12,10 +12,10 @@
 
 //structs
 struct playerData{
-    string name    = "eat";
-    string author  = "pant";
+    string name    = "ERROR HERE     ";
+    string author  = "ERROR HERE     ";
     string board[10];
-    string shot    = "first";
+    string shot    = "ERROR HERE     ";
     bool   won     = false;
 };
 
@@ -28,55 +28,30 @@ void displayTurn(turnStruct turnData, bool endDisplay);
 int  extractInteger(string str);
 void printBoard(turnStruct turn, int boardChoice, bool endDisplay);
 
-/*
-    string gotoRowCol( const int x, const int y );
-    string fgColor( Color c );
-    string bgColor( Color c );
-    string setTextStyle( TextStyle ts );
-    string resetAll( );
-    string clrscr();
-*/
-
 
 
 using namespace std;
 using namespace conio;
 
-int main(){
+int display(string matchFile, int watchAll, int runChoice, int delay){
     
-    //Both of these may need to change
     map<int, map<int, turnStruct>> matches;  // This maps the 50 matches that were played in the log file.
     map<int, turnStruct> match;              // This maps the individual turns in a single match. accessing a turn looks like match[x][y]
+    map<int, int> matchNum;
     int matchIndex = 0;
     int turnIndex  = 0;
-    //cout << "Test['b']: " << test['b'] << endl; // a test for uninitalized value turned up as zero
-
-    /*
-    for match in matches:
-        for turn in match:
-            turn = turnStruct
-    
-    
-    
-    while(game[whatMatchThisIs]!=null){
-        while(game[whatMatchThisIs][whatTurnThisIs]!=null){
-            do:
-                game;
-        }
-    }
-    */
-
     
     regex match_start("^MATCH_START_ROUND:.*");
     regex match_end("^MATCH_OVER");
+    regex matchWinLoss(".*WIN-LOSS-TIE:.*");
 
     cout << clrscr() << flush;
 
     string line;
-    ifstream log_file ("logs/client_vs_client_auto.log");
+    ifstream log_file ("logs/"+matchFile);
     
     //print off dummy board
-    cout << gotoRowCol(3, 1)   << "author1"      << endl
+    cout << gotoRowCol(3, 1)   << "author1" << endl
          << gotoRowCol(4, 1)   << "client1"      << endl
          << gotoRowCol(6, 1)   << " |0123456789" << endl
          << gotoRowCol(7, 1)   << "------------" << endl
@@ -91,7 +66,7 @@ int main(){
          << gotoRowCol(16, 1)  << "I|~~~~~~~~~~" << endl
          << gotoRowCol(17, 1)  << "J|~~~~~~~~~~" << endl;
         
-    cout << gotoRowCol(3, 50)  << "author2"      << endl
+    cout << gotoRowCol(3, 50)  << "author2" << endl
          << gotoRowCol(4, 50)  << "client2"      << endl
          << gotoRowCol(6, 50)  << " |0123456789" << endl
          << gotoRowCol(7, 50)  << "------------" << endl
@@ -106,11 +81,14 @@ int main(){
          << gotoRowCol(16, 50) << "I|~~~~~~~~~~" << endl
          << gotoRowCol(17, 50) << "J|~~~~~~~~~~" << endl;
     
+    string player1Record = "";
+    string player2Record = "";
 
     if(log_file.is_open()){
         while(getline(log_file, line)){
             if(regex_match(line, match_start)){
                 //cout << "There was a beginning of a match!" << endl;
+                matchNum[matchIndex] = extractInteger(line);
                 cout << gotoRowCol(1,1) << "Match Number: " << extractInteger(line) << endl;
                 map<int, turnStruct> match;
                 matches[matchIndex] = match;
@@ -119,9 +97,13 @@ int main(){
             }else if(regex_match(line, match_end)){
                 cout << gotoRowCol(1,1) << "Match Ended!                   " << endl;
                 matchIndex++;
+            }else if(regex_match(line, matchWinLoss)){
+                player1Record = line;
+                getline(log_file, line);
+                player2Record = line;
+                break;
             }else{
                 //save match to current game match
-
                 
                 //read in player1
                 matches[matchIndex][turnIndex].player1.author = line;
@@ -153,31 +135,41 @@ int main(){
             }
         }
     }
-
     
-    for(int curMatch=0; curMatch<matchIndex+1; curMatch++){
+    int curMatch = matchIndex-1;
+    if(watchAll == 2){
+        curMatch = 0;
+    }
+    for( ; curMatch<matchIndex; curMatch++){
         int turnsInMatch = matches[curMatch].size();
-        cout << gotoRowCol(1,1) << "Match Number: " << curMatch << endl;
+        cout << gotoRowCol(1,1) << "Match Number: " << matchNum[curMatch] << endl;
         cout << gotoRowCol(2,1) << "                                                     " << endl;
+        cout << gotoRowCol(21,1) << "                                                     " << endl;
         int turnCount = 0;
         for( ; turnCount < turnsInMatch; ){
             displayTurn(matches[curMatch][turnCount], false);
-            // handle input for going back
-            cout << gotoRowCol(21, 1);
-            char temp;
-            temp = cin.get();
-            if(temp != '\n'){
-                cin.ignore(1024, '\n');
-            }
-            cout << gotoRowCol(21, 1) << "                                                                                                                   ";
-            if(temp == 'b' || temp == 'r'){
-                if(turnCount>0){
-                    turnCount--;
-                }
-            }else{
+            if(runChoice == 1){
+                sleep(delay);
                 turnCount++;
+            }else{
+                // handle input for going back
+                cout << gotoRowCol(27, 1);
+                char temp;
+                temp = cin.get();
+                if(temp != '\n'){
+                    cin.ignore(1024, '\n');
+                }
+                cout << gotoRowCol(27, 1) << "                                                                                                                   ";
+                if(temp == 'b' || temp == 'r'){
+                    if(turnCount > 0){
+                        turnCount--;
+                    }
+                }else{
+                    if(turnCount < turnsInMatch){
+                        turnCount++;
+                    }
+                }
             }
-            //sleep(1);
         }
         //handle end-game display
         cout << gotoRowCol(1,1) << "Match Ended!                                       " << endl;
@@ -188,6 +180,16 @@ int main(){
             cin.ignore(1024, '\n');
         }
         //sleep(5);
+    }
+
+    cout << gotoRowCol(24,1) << player1Record << endl;
+    cout << gotoRowCol(25,1) << player2Record << endl;
+
+    cout << gotoRowCol(30, 1) << "Press Enter to finish ";
+    char temp;
+    temp = cin.get();
+    if(temp != '\n'){
+        cin.ignore(1024, '\n');
     }
 
     return 0;
@@ -223,12 +225,12 @@ void displayTurn(turnStruct turnData, bool endDisplay){
 
 
         if(turnData.player1.won && turnData.player2.won){
-            cout << gotoRowCol(25, 1) << "TIE!!!" << endl;
+            cout << gotoRowCol(21, 1) << "TIE!!!" << endl;
         }
         else if(turnData.player1.won){
-            cout << gotoRowCol(25, 1) << turnData.player1.name << " WON!!!" << endl;
+            cout << gotoRowCol(21, 1) << turnData.player1.name << " WON!!!" << endl;
         }else{
-            cout << gotoRowCol(25, 1) << turnData.player2.name << " WON!!!" << endl;
+            cout << gotoRowCol(21, 1) << turnData.player2.name << " WON!!!" << endl;
         }
     }
     
@@ -237,23 +239,14 @@ void displayTurn(turnStruct turnData, bool endDisplay){
 
 int extractInteger(string str) { 
     stringstream ss;     
-  
-    /* Storing the whole string into string stream */
     ss << str; 
   
-    /* Running loop till the end of the stream */
     string temp; 
     int found; 
     while (!ss.eof()) { 
-  
-        /* extracting word by word from stream */
         ss >> temp; 
-  
-        /* Checking the given word is integer or not */
         if (stringstream(temp) >> found) 
             return found;
-  
-        /* To save from space at the end of string */
         temp = ""; 
     }
     return -1; 

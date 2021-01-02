@@ -36,6 +36,8 @@ void socketClose(int sock);
 
 
 int main(int argc, char *argv[]){
+    ssize_t waste;
+
     srand(getpid());
     string clientID = to_string(getpid());
 
@@ -62,7 +64,7 @@ int main(int argc, char *argv[]){
         memset(&buffer, 0, sizeof(buffer));//clear the buffer
 
         //recv(clientSd, (char*)&buffer, sizeof(buffer), 0);
-        read( clientSd , buffer, 1499);
+        waste=read( clientSd , buffer, 1499);
 
         string tempStr="";
         tempStr.append(buffer);
@@ -84,6 +86,9 @@ int main(int argc, char *argv[]){
     close(clientSd);
     cerr << "Connection closed for client " << clientID << endl;
 
+    if(waste){
+        //do nothing--this is just to stop a warning from popping up.
+    }
     return 0;
 }
 
@@ -195,7 +200,7 @@ int socketConnect(int sock, const char *socket_name){
 
     memset(&address, 0x00, sizeof(address));
     address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, socket_name, SOCKET_NAME_MAX_LEN);
+    strncpy(address.sun_path, socket_name, SOCKET_NAME_MAX_LEN-1);
 
     return connect(sock, (struct sockaddr *)&address, sizeof(address));
 }
