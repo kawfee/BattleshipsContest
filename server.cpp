@@ -130,11 +130,37 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
         
 
         if(match.error == true){
+            log_stream << "MATCH_OVER" << endl;
+
             c1.kill();
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
             childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
-            return -1; // or a break maybe? change as necessary
+            c1.~Popen();
+            c2.~Popen();
+            
+            // return -1; // or a break maybe? change as necessary
+
+            //auto c1 = Popen({"./AI_Executables/"+player1.name});
+            /* c1.Popen({"./AI_Executables/"+player1.name});
+            masterSocketConnection(readfds, master_socket, max_sd, activity,
+                new_socket, address, addrlen,
+                max_clients, client_socket, i, countConnected);
+
+            //auto c2 = Popen({"./AI_Executables/"+player2.name});
+            c2.Popen({"./AI_Executables/"+player2.name});
+            masterSocketConnection(readfds, master_socket, max_sd, activity,
+                new_socket, address, addrlen,
+                max_clients, client_socket, i, countConnected);
+
+            sendReceive(player1, readfds, master_socket, max_sd, client_socket[0], countConnected, gameMsg,
+                activity, address, addrlen, client_socket, dConnect,
+                c1, valread);
+
+
+            sendReceive(player2, readfds, master_socket, max_sd, client_socket[1], countConnected, gameMsg,
+                activity, address, addrlen, client_socket, dConnect,
+                c2, valread); */
         }
 
         // string name;
@@ -783,6 +809,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
     //if it takes longer than timeval tv the process is killed and activity gets a value less then 0.
     struct timeval tv = {0, 500000}; // Half a second
     activity = select( max_sd + 1 , &readfds , NULL , NULL , &tv);
+    //cout << "Current Client: " << currentClient << " Activity: " << activity << endl;
 
 
     // Handles a timeout error from the above select statement
@@ -998,11 +1025,9 @@ int gameOver(json (&c1Ships)[6], json (&c2Ships)[6]){
 
     if(c1Ships_areDead && c2Ships_areDead){
         return 0;
-    }
-    else if(!c1Ships_areDead && c2Ships_areDead){
+    }else if(!c1Ships_areDead && c2Ships_areDead){
         return 1;
-    }
-    else if(c1Ships_areDead && !c2Ships_areDead){
+    }else if(c1Ships_areDead && !c2Ships_areDead){
         return 2;
     }
     else{

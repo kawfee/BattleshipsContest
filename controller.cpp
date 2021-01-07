@@ -137,6 +137,7 @@ int main(){
         time(&t1);
         cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile) << endl;
         time(&t2);
+        sleep(5);
         cout << "^^^ Game returned result" << endl;
 
         display(matchFile, watchAll, runChoice, delay);

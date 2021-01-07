@@ -1234,7 +1234,7 @@ private:
 
   // Command in string format
   std::string args_;
-  // Comamnd provided as sequence
+  // Command provided as sequence
   std::vector<std::string> vargs_;
   std::vector<char*> cargv_;
 

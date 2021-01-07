@@ -27,13 +27,14 @@ struct turnStruct{
 void displayTurn(turnStruct turnData, bool endDisplay);
 int  extractInteger(string str);
 void printBoard(turnStruct turn, int boardChoice, bool endDisplay);
+void slumber(double secs);
 
 
 
 using namespace std;
 using namespace conio;
 
-int display(string matchFile, int watchAll, int runChoice, int delay){
+int display(string matchFile, int watchAll, int runChoice, double delay){
     
     map<int, map<int, turnStruct>> matches;  // This maps the 50 matches that were played in the log file.
     map<int, turnStruct> match;              // This maps the individual turns in a single match. accessing a turn looks like match[x][y]
@@ -149,7 +150,7 @@ int display(string matchFile, int watchAll, int runChoice, int delay){
         for( ; turnCount < turnsInMatch; ){
             displayTurn(matches[curMatch][turnCount], false);
             if(runChoice == 1){
-                sleep(delay);
+                slumber(delay);
                 turnCount++;
             }else{
                 // handle input for going back
@@ -174,12 +175,15 @@ int display(string matchFile, int watchAll, int runChoice, int delay){
         //handle end-game display
         cout << gotoRowCol(1,1) << "Match Ended!                                       " << endl;
         displayTurn(matches[curMatch][turnCount-1], true);
-        char temp;
-        temp = cin.get();
-        if(temp != '\n'){
-            cin.ignore(1024, '\n');
+        if(curMatch!=matchIndex-1){
+            char temp;
+            temp = cin.get();
+            if(temp != '\n'){
+                cin.ignore(1024, '\n');
+            }
+            //sleep(5);
         }
-        //sleep(5);
+        
     }
 
     cout << gotoRowCol(24,1) << player1Record << endl;
@@ -236,7 +240,6 @@ void displayTurn(turnStruct turnData, bool endDisplay){
     
 }
 
-
 int extractInteger(string str) { 
     stringstream ss;     
     ss << str; 
@@ -251,7 +254,6 @@ int extractInteger(string str) {
     }
     return -1; 
 } 
-
 
 void printBoard(turnStruct turn, int boardChoice, bool endDisplay){
     if(boardChoice==1){
@@ -364,7 +366,7 @@ void printBoard(turnStruct turn, int boardChoice, bool endDisplay){
     
 }
 
-
-
-
-
+void slumber(double secs){
+    const double SEC_TO_MICROSEC = 1000000.0;
+    usleep(secs * SEC_TO_MICROSEC);
+}
