@@ -1,64 +1,22 @@
-#CXXFLAGS = -Og -std=c++11 -Wall -g -no-pie -fno-builtin
-#LDFLAGS  = -pg
+CXXFLAGS 	= -std=c++11 -Wall -O3
+ORIGIN_DIR 	= AI_Files
+TARGET_DIR 	= AI_Executables
+OBJ 		= $(addprefix $(TARGET_DIR)/, $(patsubst %.cpp, %.o, $(wildcard *.cpp)))
 
-CXXFLAGS = -std=c++11 -Wall -O3
-
-object_files: client client_auto controller
-client_auto: client_auto.cpp
-client: client.cpp
-controller: controller.cpp
-
-# How to deal with making executables in sub-directory for a cleaner file system
-move:
-	make; mv client_auto AI_Executables; mv client AI_Executables;
-
-clean:
-	rm -f ./AI_Executables/client_auto ./AI_Executables/client controller
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# CXXFLAGS = -Og -std=c++11 -Wall -g -no-pie -fno-builtin
-# LDFLAGS  = -pg
-
-# # is this /* working? 
-# object_files: client client_auto client_manual controller
-# 	chmod 755 ./AI_Executables/*
-# 	chmod 755 controller
-# client: client.cpp
+# object_files: client client_auto controller
 # client_auto: client_auto.cpp
-# client_manual: client_manual.cpp
+# client: client.cpp
 # controller: controller.cpp
 
 # # How to deal with making executables in sub-directory for a cleaner file system
 # move:
-# 	make; mv client AI_Executables; mv client_auto AI_Executables; mv client_manual AI_Executables;
+# 	make; mv client_auto AI_Executables; mv client AI_Executables;
 
-# controller:
-# 	g++ $(CXXFLAGS) -o controller controller.cpp $(LDFLAGS)
+all: $(patsubst ./$(ORIGIN_DIR)%.cpp, $(TARGET_DIR)%.out, $(wildcard *.cpp))
+%.out: %.cpp makefile
+	g++ $< -o $@ $(CXXFLAGS)
 
-# clean:
-# 	rm -f ./AI_Executables/client ./AI_Executables/client_auto ./AI_Executables/client_manual controller ais.txt
+clean:
+	rm -f ./AI_Executables/* controller; touch ./AI_Executables/.gitkeep;
 
-# # CXXFLAGS = -Og -Wall -g -pg -no-pie -fno-builtin
-# # LDFLAGS = -pg
-
-# # g++ $(CXXFLAGS) -o $(EXEC) $(OBJ) $(LDFLAGS)
-
-# # profile:
-# #         gprof infectsim | more
 

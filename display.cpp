@@ -228,13 +228,14 @@ void displayTurn(turnStruct turnData, bool endDisplay){
         cout << gotoRowCol(19, 50) << turnData.player1.shot << endl;
 
 
-        if(turnData.player1.won && turnData.player2.won){
+        if((turnData.player1.won && turnData.player2.won) || (!turnData.player2.won && !turnData.player1.won)){
             cout << gotoRowCol(21, 1) << "TIE!!!" << endl;
-        }
-        else if(turnData.player1.won){
+        }else if(turnData.player1.won){
             cout << gotoRowCol(21, 1) << turnData.player1.name << " WON!!!" << endl;
-        }else{
+        }else if(turnData.player2.won){
             cout << gotoRowCol(21, 1) << turnData.player2.name << " WON!!!" << endl;
+        }else{
+            cout << gotoRowCol(21, 1) << "Something reeeeeeeally funky happened. I'd recommend an exorcist, but whatever floats your boat." << endl;
         }
     }
     

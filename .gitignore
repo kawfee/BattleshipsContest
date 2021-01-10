@@ -2,4 +2,3 @@ controller
 AI_Executables/*
 !AI_Executables/.gitkeep
 !AI_Executables/py_ai.py
-old_Ais/

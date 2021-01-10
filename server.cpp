@@ -136,31 +136,8 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
             c2.kill();
             childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
             childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
-            c1.~Popen();
-            c2.~Popen();
             
-            // return -1; // or a break maybe? change as necessary
-
-            //auto c1 = Popen({"./AI_Executables/"+player1.name});
-            /* c1.Popen({"./AI_Executables/"+player1.name});
-            masterSocketConnection(readfds, master_socket, max_sd, activity,
-                new_socket, address, addrlen,
-                max_clients, client_socket, i, countConnected);
-
-            //auto c2 = Popen({"./AI_Executables/"+player2.name});
-            c2.Popen({"./AI_Executables/"+player2.name});
-            masterSocketConnection(readfds, master_socket, max_sd, activity,
-                new_socket, address, addrlen,
-                max_clients, client_socket, i, countConnected);
-
-            sendReceive(player1, readfds, master_socket, max_sd, client_socket[0], countConnected, gameMsg,
-                activity, address, addrlen, client_socket, dConnect,
-                c1, valread);
-
-
-            sendReceive(player2, readfds, master_socket, max_sd, client_socket[1], countConnected, gameMsg,
-                activity, address, addrlen, client_socket, dConnect,
-                c2, valread); */
+            return -1; // or a break maybe? change as necessary we had this when giving the AI only one chance.
         }
 
         // string name;
@@ -304,6 +281,33 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                 valread, clientStr, clientResponse, "client2",
                 c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
                 c1Ships, c2Ships);
+            
+            //do error checking
+            if(!p1Result && !p2Result){
+                // return no winner
+                cout << "BOTH AI CRASHED!" << endl;
+                temp.player1.losses += 1;
+                temp.player2.losses += 1;
+                temp.error = true;
+                return temp;
+            }
+            else if(p1Result && !p2Result){
+                // return p1 as winner
+                cout << "p2 CRASHED!" << endl;
+                temp.player1.wins += 1;
+                temp.player2.losses += 1;
+                temp.error = true;
+                return temp;
+            }
+            else if(!p1Result && p2Result){
+                // return p2 as winner
+                cout << "p1 CRASHED!" << endl;
+                temp.player1.losses += 1;
+                temp.player2.wins += 1;
+                temp.error = true;
+                return temp;
+            }
+
         }else{
             p1Result = performAction("shootShot", readfds, master_socket, max_sd, client_socket[0],
                 countConnected, msg, shipLengths, buffer, activity,
@@ -475,17 +479,32 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
                     log_stream << "MATCH_OVER" << endl;
                 }
                 
-                
                 return temp;
             } 
         }
         
-        //this is NOT the final number of rounds to be played--this is just a testing number. was at 13 for low turn count
-        if(totalGameRound >= 300){
-            c1.kill();
-            c2.kill();
-            childDisconnect(client_socket[0], address, addrlen, client_socket, dConnect);
-            childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
+        //this is the maximum number of turns in a game--anything past that and both AI eat a loss
+        if(totalGameRound >= (boardSize*boardSize*2) ){
+            temp.player1.losses += 1;
+            temp.player2.losses += 1;
+
+            p1Result = performAction("matchOver", readfds, master_socket, max_sd, client_socket[0],
+                countConnected, msg, shipLengths, buffer, activity,
+                address, addrlen, client_socket, dConnect, c1,
+                valread, clientStr, clientResponse, "client1",
+                c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                c1Ships, c2Ships);
+            p2Result = performAction("matchOver", readfds, master_socket, max_sd, client_socket[1],
+                countConnected, msg, shipLengths, buffer, activity,
+                address, addrlen, client_socket, dConnect, c2,
+                valread, clientStr, clientResponse, "client2",
+                c1Board, c2Board, c1ShipBoard, c2ShipBoard, boardSize, totalGameRound,
+                c1Ships, c2Ships);
+            if(logging){
+                log_stream << "MATCH_OVER" << endl;
+            }
+
+            return temp;
         }
 
         if(dConnect>=2){
@@ -854,7 +873,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             if(currentClient=="client1"){
                 if(messageType=="placeShip"){
                     c1Ships[totalGameRound-1]=clientResponse;
-                    placeShip(c1Board, c1ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c1Ships);
+                    return placeShip(c1Board, c1ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c1Ships);
                 }else if(messageType=="shootShot"){
                     int tempRow = msg.at("row");
                     int tempCol = msg.at("col");
@@ -863,7 +882,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
             }else if(currentClient=="client2"){
                 if(messageType=="placeShip"){
                     c2Ships[totalGameRound-1]=clientResponse;
-                    placeShip(c2Board, c2ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c2Ships);
+                    return placeShip(c2Board, c2ShipBoard, boardSize, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), msg, c2Ships);
                 }else if(messageType=="shootShot"){
                     int tempRow = msg.at("row");
                     int tempCol = msg.at("col");
@@ -958,9 +977,9 @@ char shootShot(char board[10][10], int boardSize, int row, int col){
     }else if(board[row][col]==SHIP){
         board[row][col]=HIT;
         return HIT;
-    }else if(board[row][col]==HIT || board[row][col]==KILL || board[row][col]==MISS){
+    }else if(board[row][col]==HIT || board[row][col]==KILL || board[row][col]==MISS || board[row][col] == DUPLICATE_SHOT){
         board[row][col]=DUPLICATE_SHOT;
-        return INVALID_SHOT; // maybe change to DUPLICATE_SHOT if necessary
+        return DUPLICATE_SHOT; // maybe change to DUPLICATE_SHOT if necessary
     }
     return INVALID_SHOT;
 }

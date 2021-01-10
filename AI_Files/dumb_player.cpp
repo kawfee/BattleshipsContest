@@ -161,6 +161,9 @@ void shootShot(json &msg, char shotBoard[10][10], int boardSize){
             }
         }
     }
+    msg.at("row") = 8;
+    msg.at("col") = 8;
+    updateBoard(shotBoard, 8, 8, 1, NONE, SHOT);
 }
 
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
