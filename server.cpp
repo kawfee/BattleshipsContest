@@ -138,6 +138,7 @@ int runGame(int numGames, Player &player1, Player &player2, int boardSize, strin
             childDisconnect(client_socket[1], address, addrlen, client_socket, dConnect);
             
             return -1; // or a break maybe? change as necessary we had this when giving the AI only one chance.
+
         }
 
         // string name;
@@ -225,7 +226,7 @@ GameInfo runMatch(Player player1, Player player2, int boardSize, int master_sock
 
 
     //create the game variables here
-    int shipLengths[] = { 3,3,4,3,3,4 };
+    int shipLengths[] = { 3,3,4,3,3,4 }; // maybe change ship sizes 
     int numShips = boardSize-2;
     if(numShips>6){
         numShips=6;

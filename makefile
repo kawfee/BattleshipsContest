@@ -10,6 +10,6 @@ controller: controller.cpp server.cpp display.cpp
 	g++ $(CXXFLAGS) -o controller controller.cpp
 
 clean:
-	rm -f ./AI_Executables/* controller; touch ./AI_Executables/.gitkeep;
+	rm -f ./AI_Executables/* controller; touch ./AI_Executables/.gitkeep; rm -f controller;
 
 

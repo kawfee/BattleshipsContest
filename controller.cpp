@@ -135,10 +135,9 @@ int main(){
         cout << "Running matches..." << endl;
 
         time(&t1);
-        cout << runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile) << endl;
+        waste = runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile);
         time(&t2);
         sleep(5);
-        cout << "^^^ Game returned result" << endl;
 
         display(matchFile, watchAll, runChoice, delay);
         

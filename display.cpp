@@ -26,7 +26,7 @@ struct turnStruct{
 
 void displayTurn(turnStruct turnData, bool endDisplay);
 int  extractInteger(string str);
-void printBoard(turnStruct turn, int boardChoice, bool endDisplay);
+void printBoard(turnStruct &turn, int boardChoice, bool endDisplay);
 void slumber(double secs);
 
 
@@ -227,7 +227,6 @@ void displayTurn(turnStruct turnData, bool endDisplay){
         cout << gotoRowCol(19, 50) << "                                                                                                                   ";
         cout << gotoRowCol(19, 50) << turnData.player1.shot << endl;
 
-
         if((turnData.player1.won && turnData.player2.won) || (!turnData.player2.won && !turnData.player1.won)){
             cout << gotoRowCol(21, 1) << "TIE!!!" << endl;
         }else if(turnData.player1.won){
@@ -256,7 +255,7 @@ int extractInteger(string str) {
     return -1; 
 } 
 
-void printBoard(turnStruct turn, int boardChoice, bool endDisplay){
+void printBoard(turnStruct &turn, int boardChoice, bool endDisplay){
     if(boardChoice==1){
         int pos = turn.player2.shot.find(":");
         int currRow = (turn.player2.shot)[pos+2]-48;

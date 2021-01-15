@@ -152,7 +152,7 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 
 void shootShot(json &msg, char shotBoard[10][10], int boardSize){
     for(int row=0;row<boardSize;row++){
-        for(int col=0;col<boardSize;col++){
+        for(int col=1;col<boardSize;col++){
             if(shotBoard[row][col]==WATER){
                 msg.at("row") = row;
                 msg.at("col") = col;

@@ -29,10 +29,13 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
 void shotReturned(json &msg);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
+void doCalculatedShot(int &returnRow, int &returnCol, int boardSize, char shotBoard[10][10]);
 void sendGameVars(json &msg);
 int socketConnect(int sock, const char *socket_name);
 int socketOpen(const char *socket_name);
 void socketClose(int sock);
+
+int shipLengths[6] = {0,0,0,0,0,0};
 
 
 int main(int argc, char *argv[]){
@@ -112,7 +115,6 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
     }else if (msg.at("messageType")=="shotReturn"){
         shotReturned(msg);
     }else if(msg.at("messageType")=="shipDied"){
-        //char board[10][10], int row, int col, int length, Direction dir, char newChar
         updateBoard(shipBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
     }else if (msg.at("messageType")=="killedShip"){
         updateBoard(shotBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
@@ -131,6 +133,12 @@ void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardS
 
 void placeShip(json &msg, char shipBoard[10][10], int boardSize){
     int shipLength = msg.at("length");
+    for(int i=0;i<6;i++){
+        if(shipLengths[i]==0){
+            shipLengths[i]=shipLength;
+            break;
+        }
+    }
     int randBorder = 10 - shipLength;
     int randCol = rand() % randBorder;
     int randRow = rand() % randBorder; 
@@ -166,19 +174,61 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 }
 
 void shootShot(json &msg, char shotBoard[10][10], int boardSize){
-    for(int row=0;row<boardSize;row++){
-        for(int col=0;col<boardSize;col++){
-            if(shotBoard[row][col]==WATER){
-                msg.at("row") = row;
-                msg.at("col") = col;
-                updateBoard(shotBoard, row, col, 1, NONE, SHOT);
-                return;
+    int row=0, col=0;
+    doCalculatedShot(row, col, boardSize, shotBoard);
+    msg.at("row") = row;
+    msg.at("col") = col;
+    updateBoard(shotBoard, row, col, 1, NONE, SHOT);
+    return;
+    // for(int row=0;row<boardSize;row++){
+    //     for(int col=0;col<boardSize;col++){
+    //         if(shotBoard[row][col]==WATER){
+    //             msg.at("row") = row;
+    //             msg.at("col") = col;
+    //             updateBoard(shotBoard, row, col, 1, NONE, SHOT);
+    //             return;
+    //         }
+    //     }
+    // }
+}
+
+void doCalculatedShot(int &returnRow, int &returnCol, int boardSize, char shotBoard[10][10]){ //shipLengths
+    int ship=0;
+    int percentageBoard[10][10];
+
+    // FIX ME PLEASE I'M TRASH
+
+    while(ship<6){
+        int len=shipLengths[ship];
+
+        for(int row=0; row<boardSize-len; row++){
+            for(int col=0; col<boardSize; col++){
+                for(int shipLen=0; shipLen<len; shipLen++){
+                    percentageBoard[row+shipLen][col]++;
+                }
+            }
+        }
+        for(int row=0; row<boardSize; row++){
+            for(int col=0; col<boardSize-len; col++){
+                for(int shipLen=0; shipLen<len; shipLen++){
+                    percentageBoard[row][col+shipLen]++;
+                }
+            }
+        }
+
+        ship++;
+    }
+    
+    int bestScore = -1;
+    for(int row=0; row < boardSize; row++){
+        for(int col=0; col<boardSize; col++){
+            if((percentageBoard[row][col] > bestScore) && (shotBoard[row][col] == WATER)){
+                bestScore = percentageBoard[row][col];
+                returnRow = row;
+                returnCol = col;
             }
         }
     }
-    msg.at("row") = 9;
-    msg.at("col") = 9;
-    updateBoard(shotBoard, 9, 9, 1, NONE, SHOT);
 }
 
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
@@ -203,6 +253,21 @@ void shotReturned(json &msg){
 void sendGameVars(json &msg){
     msg.at("str") = "Joey Gorski and Matthew Bouch"; // Your author name(s) here
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
