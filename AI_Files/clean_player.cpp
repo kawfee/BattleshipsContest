@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
     auto waste=0;
 
     srand(getpid());
-    string clientID = to_string(getpid());
+    string clientID = "clean_player";
 
     //setup a socket and connection tools
     const char *path = "./serversocket";

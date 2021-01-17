@@ -82,7 +82,7 @@ int main(){
             boardSize = stoi(temp);    
         }
         
-        cout << "Watch all recorded games or only the last? [(1:last), 2:all] ";
+        cout << "Watch all recorded games or only the last? [(1:last), 2:all, 3:none] ";
         getline(cin, temp);
         if (regex_match(temp, int_expr)){
             watchAll = stoi(temp);    
@@ -139,7 +139,9 @@ int main(){
         time(&t2);
         sleep(5);
 
-        display(matchFile, watchAll, runChoice, delay);
+        if(watchAll != 3){
+            display(matchFile, watchAll, runChoice, delay);
+        }
         
         //display final stats
         // cout << players[aiChoiceOne].name 

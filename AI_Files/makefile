@@ -6,6 +6,9 @@ PROGS = $(patsubst %.cpp, %, $(SRCS))
 all: $(PROGS)
 	mv *.ai ../AI_Executables
 
+gambler: gambler_player.cpp
+	$(CXX) $(CXXFLAGS) $(CFLAGS) -o gambler_player.ai gambler_player.cpp; mv *.ai ../AI_Executables;
+
 %: %.cpp
 	$(CXX) $(CXXFLAGS) $(CFLAGS) -o $@.ai $<
 

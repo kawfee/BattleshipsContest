@@ -27,7 +27,7 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg, char shipBoard[10][10], int boardSize);
 void shootShot(json &msg, char shotBoard[10][10], int boardSize);
-void shotReturned(json &msg);
+void shotReturned(json &msg, string clientID, char shotBoard[10][10]);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 void doCalculatedShot(int &returnRow, int &returnCol, int boardSize, char shotBoard[10][10]);
 void sendGameVars(json &msg);
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
     auto waste=0;
 
     srand(getpid());
-    string clientID = to_string(getpid());
+    string clientID = "gambler_player";
 
     //setup a socket and connection tools
     const char *path = "./serversocket";
@@ -113,7 +113,7 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
         msg.at("count") = round;
         shootShot(msg, shotBoard, boardSize);
     }else if (msg.at("messageType")=="shotReturn"){
-        shotReturned(msg);
+        shotReturned(msg, clientID, shotBoard);
     }else if(msg.at("messageType")=="shipDied"){
         updateBoard(shipBoard, msg.at("row"), msg.at("col"), msg.at("length"), msg.at("dir"), KILL);
     }else if (msg.at("messageType")=="killedShip"){
@@ -205,6 +205,12 @@ void doCalculatedShot(int &returnRow, int &returnCol, int boardSize, char shotBo
             for(int col=0; col<boardSize; col++){
                 for(int shipLen=0; shipLen<len; shipLen++){
                     percentageBoard[row+shipLen][col]++;
+                    if(shotBoard[row][col]==HIT){
+                        if(col<boardSize-1)         percentageBoard[row+shipLen][col+1]+=1000;
+                        if(row+shipLen<boardSize-1) percentageBoard[row+shipLen+1][col]+=1000;
+                        if(col>0)                   percentageBoard[row+shipLen][col-1]+=1000;
+                        if(row+shipLen>0)           percentageBoard[row+shipLen-1][col]+=1000;
+                    }
                 }
             }
         }
@@ -212,6 +218,12 @@ void doCalculatedShot(int &returnRow, int &returnCol, int boardSize, char shotBo
             for(int col=0; col<boardSize-len; col++){
                 for(int shipLen=0; shipLen<len; shipLen++){
                     percentageBoard[row][col+shipLen]++;
+                    if(shotBoard[row][col]==HIT){
+                        if(col+shipLen<boardSize-1) percentageBoard[row][col+shipLen+1]+=1000;
+                        if(row<boardSize-1)         percentageBoard[row+1][col+shipLen]+=1000;
+                        if(col+shipLen>0)           percentageBoard[row][col+shipLen-1]+=1000;
+                        if(row>0)                   percentageBoard[row-1][col+shipLen]+=1000;
+                    }
                 }
             }
         }
@@ -245,9 +257,25 @@ void updateBoard(char board[10][10], int row, int col, int length, Direction dir
     }
 }
 
-void shotReturned(json &msg){
-    //cout << "Got to shotReturned() function in client" << endl;
+void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
     // Do something with the message data here. 
+    //cout << msg.dump(4) << endl;
+
+    if(msg.at("client") == clientID){
+        // do nothing
+    }else{
+        //updateBoard(board[10][10], row, col, length, dir, newChar)
+        int tempRow = msg.at("row");
+        int tempCol = msg.at("col");
+        string tempResult = msg.at("str");
+        if(tempResult.c_str()[0] == HIT){
+            //cout << "Hello World" << endl;
+            shotBoard[tempRow][tempCol]=HIT;
+        }else if(tempResult.c_str()[0] == MISS){
+            //cout << "Hello World2" << endl;
+            shotBoard[tempRow][tempCol]=MISS;
+        }
+    }
 }
 
 void sendGameVars(json &msg){
