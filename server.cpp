@@ -929,10 +929,6 @@ bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int ro
     if( (row+length>boardSize || col+length>boardSize) || (row<0 || col<0) ){
         return false;
     }
-    if(dir!=VERTICAL && dir!=HORIZONTAL){
-        cerr << "Direction is WACC" << endl;
-        return false;
-    }
     if(dir==HORIZONTAL){
         for(int len=0;len<length;len++){
             if(board[row][col+len]!=WATER){
