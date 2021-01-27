@@ -1,0 +1,6 @@
+bad_player.ai
+clean_player.ai
+dumb_player.ai
+gambler_player2.ai
+gambler_player.ai
+gambler_player.ai.bak

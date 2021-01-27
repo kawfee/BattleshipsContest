@@ -51,13 +51,6 @@ struct container{
 };
 container gameVars;
 
-for(int i = 0; i < 10; i++){
-    for(int j = 0; j < 10; j++){
-        gameVars.cellWeights[i][j] = -1;
-    }
-}
-gameVars.shipLengths[6] = {0,0,0,0,0,0};
-// access things with gameVars.shipLengths for example
 
 int main(int argc, char *argv[]){
     auto waste=0;
@@ -77,6 +70,16 @@ int main(int argc, char *argv[]){
     int boardSize=10;
     char shipBoard[10][10];
     char shotBoard[10][10];
+
+    // access things with gameVars.shipLengths for example
+    for(int i = 0; i < 10; i++){
+        for(int j = 0; j < 10; j++){
+            gameVars.cellWeights[i][j] = -1;
+        }
+    }
+    for(int i=0;i<6;i++)  {
+        gameVars.shipLengths[i] = 0;
+    }
 
     //populate boards
     wipeBoards(shipBoard, shotBoard, boardSize);
@@ -132,7 +135,9 @@ void messageHandler(json &msg, string &clientID, int &round, char (&shipBoard)[1
         }
         gameVars.lastRow = 0;
         gameVars.lastCol = 0;
-        gameVars.shipLengths[6] = {0,0,0,0,0,0};
+        for(int i=0;i<6;i++)  {
+            gameVars.shipLengths[i] = 0;
+        }
     }else if(msg.at("messageType")=="placeShip"){
         msg.at("client") = clientID;
         msg.at("count") = round;
@@ -216,9 +221,9 @@ bool haveUnfinishedBusiness( int position[2], int boardSize, char board[10][10])
 void getNextProbe( int shot[], char board[10][10], int boardSize);
 void printWeightedBoard( int board[10][10] );
 void getMaxWeightCell( int board[10][10], int shot[2], int boardSize); 
-int calcCellWeight( int row, int col, int boardSize, char board[10][10] );
-int calcCellWeightVert( int row, int col, int length, char board[10][10], int boardSize);
-int calcCellWeightHoriz( int row, int col, int length, char board[10][10], int boardSize);
+int  calcCellWeight( int row, int col, int boardSize, char board[10][10] );
+int  calcCellWeightVert( int row, int col, int length, char board[10][10], int boardSize);
+int  calcCellWeightHoriz( int row, int col, int length, char board[10][10], int boardSize);
 bool onBoard( int row, int col, int boardSize );
 char getCellStatus( int row, int col, char board[10][10] ); 
 void ensureMaxShipLength();
@@ -234,7 +239,7 @@ void shootShot(json &msg, char shotBoard[10][10], int boardSize){
     int shot[] = {0,0};
     doCalculatedShot(shot, shotBoard, boardSize);
     msg.at("row") = shot[0];
-    msg.at("col") = shot[1]; 
+    msg.at("col") = shot[1];
     return;
 }
 
@@ -554,9 +559,6 @@ void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
     //cout << msg.dump(4) << endl;
 
     if(msg.at("client") == clientID){
-        // do nothing
-    }else{
-        //updateBoard(board[10][10], row, col, length, dir, newChar)
         int tempRow = msg.at("row");
         int tempCol = msg.at("col");
         string tempResult = msg.at("str");
@@ -565,6 +567,9 @@ void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
         }else if(tempResult.c_str()[0] == MISS){
             shotBoard[tempRow][tempCol]=MISS;
         }
+    }else{
+        //do nothing
+        //unless... ?
     }
 }
 
