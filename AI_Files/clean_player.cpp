@@ -30,8 +30,8 @@ void shootShot(json &msg, char shotBoard[10][10], int boardSize);
 void shotReturned(json &msg);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 void sendGameVars(json &msg);
-int socketConnect(int sock, const char *socket_name);
-int socketOpen(const char *socket_name);
+int  socketConnect(int sock, const char *socket_name);
+int  socketOpen(const char *socket_name);
 void socketClose(int sock);
 
 
@@ -151,16 +151,7 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 }
 
 void shootShot(json &msg, char shotBoard[10][10], int boardSize){
-    for(int row=0;row<boardSize;row++){
-        for(int col=0;col<boardSize;col++){
-            if(shotBoard[row][col]==WATER){
-                msg.at("row") = row;
-                msg.at("col") = col;
-                updateBoard(shotBoard, row, col, 1, NONE, SHOT);
-                return;
-            }
-        }
-    }
+    
     msg.at("row") = 9;
     msg.at("col") = 9;
     updateBoard(shotBoard, 9, 9, 1, NONE, SHOT);

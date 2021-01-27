@@ -1,3 +1,11 @@
+/**
+ * @author Matthew Bouch, Joey Gorski, Stefan Brandle, Jonathan Geisler
+ * @date January, 2021
+ * 
+ * Gambler Player has logic for random ship placement as well as shooting at smart locations
+ * 
+ */
+
 #include <iostream>
 #include <string>
 #include <stdio.h>
@@ -205,6 +213,257 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
     msg.at("dir") = randDir;
     updateBoard(shipBoard, randRow, randCol, msg.at("length"), randDir, SHIP);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
+    if(dir==HORIZONTAL){
+        for(int len=0;len<length;len++){
+            board[row][col+len]=newChar;
+        }
+    }else if(dir==VERTICAL){
+        for(int len=0;len<length;len++){
+            board[row+len][col]=newChar;
+        }
+    }else if(dir==NONE){
+        board[row][col]=newChar;
+    }
+}
+
+void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
+    // Do something with the message data here. 
+    //cout << msg.dump(4) << endl;
+
+    if(msg.at("client") == clientID){
+        int tempRow = msg.at("row");
+        int tempCol = msg.at("col");
+        string tempResult = msg.at("str");
+        if(tempResult.c_str()[0] == HIT){
+            shotBoard[tempRow][tempCol]=HIT;
+        }else if(tempResult.c_str()[0] == MISS){
+            shotBoard[tempRow][tempCol]=MISS;
+        }
+    }else{
+        //do nothing
+        //unless... ?
+    }
+}
+
+void sendGameVars(json &msg){
+    msg.at("str") = "Gambler Player"; // Your author name(s) here
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int socketConnect(int sock, const char *socket_name){
+    struct sockaddr_un address;
+
+    memset(&address, 0x00, sizeof(address));
+    address.sun_family = AF_UNIX;
+    strncpy(address.sun_path, socket_name, SOCKET_NAME_MAX_LEN-1);
+
+    return connect(sock, (struct sockaddr *)&address, sizeof(address));
+}
+
+int socketOpen(const char *socket_name){
+    int res;
+
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0)
+        return -1;
+
+    res = socketConnect(sock, socket_name);
+    if (res < 0) {
+        close(sock);
+        return res;
+    }
+    
+    return sock;
+}
+
+void socketClose(int sock){
+    if (sock > 0)
+        close(sock);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -500,201 +759,4 @@ void ensureMaxShipLength(){
 // every time!
 char getCellStatus( int row, int col, char board[10][10] ) {
     return board[row][col];
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
-    if(dir==HORIZONTAL){
-        for(int len=0;len<length;len++){
-            board[row][col+len]=newChar;
-        }
-    }else if(dir==VERTICAL){
-        for(int len=0;len<length;len++){
-            board[row+len][col]=newChar;
-        }
-    }else if(dir==NONE){
-        board[row][col]=newChar;
-    }
-}
-
-void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
-    // Do something with the message data here. 
-    //cout << msg.dump(4) << endl;
-
-    if(msg.at("client") == clientID){
-        int tempRow = msg.at("row");
-        int tempCol = msg.at("col");
-        string tempResult = msg.at("str");
-        if(tempResult.c_str()[0] == HIT){
-            shotBoard[tempRow][tempCol]=HIT;
-        }else if(tempResult.c_str()[0] == MISS){
-            shotBoard[tempRow][tempCol]=MISS;
-        }
-    }else{
-        //do nothing
-        //unless... ?
-    }
-}
-
-void sendGameVars(json &msg){
-    msg.at("str") = "Joey Gorski and Matthew Bouch"; // Your author name(s) here
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int socketConnect(int sock, const char *socket_name){
-    struct sockaddr_un address;
-
-    memset(&address, 0x00, sizeof(address));
-    address.sun_family = AF_UNIX;
-    strncpy(address.sun_path, socket_name, SOCKET_NAME_MAX_LEN-1);
-
-    return connect(sock, (struct sockaddr *)&address, sizeof(address));
-}
-
-int socketOpen(const char *socket_name){
-    int res;
-
-    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock < 0)
-        return -1;
-
-    res = socketConnect(sock, socket_name);
-    if (res < 0) {
-        close(sock);
-        return res;
-    }
-    
-    return sock;
-}
-
-void socketClose(int sock){
-    if (sock > 0)
-        close(sock);
 }

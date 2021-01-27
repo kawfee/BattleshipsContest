@@ -30,9 +30,13 @@ void shootShot(json &msg, char shotBoard[10][10], int boardSize);
 void shotReturned(json &msg);
 void wipeBoards(char (&shipBoard)[10][10], char (&shotBoard)[10][10], int boardSize);
 void sendGameVars(json &msg);
-int socketConnect(int sock, const char *socket_name);
-int socketOpen(const char *socket_name);
+int  socketConnect(int sock, const char *socket_name);
+int  socketOpen(const char *socket_name);
 void socketClose(int sock);
+
+
+
+
 
 
 int main(int argc, char *argv[]){
