@@ -55,7 +55,7 @@ struct container{
     int cellWeights[10][10];
     int lastRow=0;
     int lastCol=0;
-    int shipMaxLength=3;
+    int shipMaxLength=4;
 };
 container gameVars;
 
@@ -220,48 +220,6 @@ void placeShip(json &msg, char shipBoard[10][10], int boardSize){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
     if(dir==HORIZONTAL){
         for(int len=0;len<length;len++){
@@ -306,90 +264,6 @@ void sendGameVars(json &msg){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int socketConnect(int sock, const char *socket_name){
     struct sockaddr_un address;
 
@@ -420,51 +294,6 @@ void socketClose(int sock){
     if (sock > 0)
         close(sock);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
