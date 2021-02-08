@@ -242,11 +242,7 @@ void shotReturned(json &msg, string clientID, char shotBoard[10][10]){
         int tempRow = msg.at("row");
         int tempCol = msg.at("col");
         string tempResult = msg.at("str");
-        if(tempResult.c_str()[0] == HIT){
-            shotBoard[tempRow][tempCol]=HIT;
-        }else if(tempResult.c_str()[0] == MISS){
-            shotBoard[tempRow][tempCol]=MISS;
-        }
+        shotBoard[tempRow][tempCol]=tempResult.c_str()[0];
     }else{
         //do nothing
         //unless... ?

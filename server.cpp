@@ -974,7 +974,10 @@ char shootShot(char board[10][10], int boardSize, int row, int col){
     }else if(board[row][col]==SHIP){
         board[row][col]=HIT;
         return HIT;
-    }else if(board[row][col]==HIT || board[row][col]==KILL || board[row][col]==MISS || board[row][col] == DUPLICATE_SHOT){
+    }else if (board[row][col]==HIT || board[row][col]==DUPLICATE_HIT){
+        board[row][col]=DUPLICATE_HIT;
+        return DUPLICATE_HIT; 
+    }else if(board[row][col]==KILL || board[row][col]==MISS || board[row][col] == DUPLICATE_SHOT){
         board[row][col]=DUPLICATE_SHOT;
         return DUPLICATE_SHOT; // maybe change to DUPLICATE_SHOT if necessary
     }
@@ -982,19 +985,22 @@ char shootShot(char board[10][10], int boardSize, int row, int col){
 }
 
 int findDeadShip(int numShips, json (&ships)[6], json &msg, char board[10][10]){
-
     //numShips, board[][], msg
     bool allHit;
     for(int i=0; i<numShips; i++){
         allHit = true;
         for(int len=0;len<ships[i].at("length") && allHit; len++){
             if(ships[i].at("dir")==VERTICAL){
-                if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT){
+                if(board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != HIT 
+                   && 
+                   board[ int(ships[i].at("row")) + len ][ int(ships[i].at("col")) ] != DUPLICATE_HIT){
                     allHit = false;
                     break;
                 }
             }else if(ships[i].at("dir")==HORIZONTAL){
-                if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT){
+                if(board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != HIT 
+                   && 
+                   board[ int(ships[i].at("row")) ][ int(ships[i].at("col")) + len ] != DUPLICATE_HIT){
                     allHit = false;
                     break;
                 }

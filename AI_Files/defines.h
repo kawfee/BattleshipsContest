@@ -13,6 +13,7 @@ using namespace std;
     const char SHOT = '@';
     const char MISS = '*';
     const char DUPLICATE_SHOT  = '!';
+    const char DUPLICATE_HIT  = 'H';
     const char HIT  = 'X';
     const char KILL = 'K';
     const char SHIP = 'S';

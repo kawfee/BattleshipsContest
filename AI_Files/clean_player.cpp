@@ -115,6 +115,8 @@ void messageHandler(json &msg, string &clientID, int &round){
         for(int i=0;i<6;i++)  {
             gameVars.shipLengths[i] = 0;
         }
+        gameVars.scanRow=0;
+        gameVars.scanCol=0;
     }else if(msg.at("messageType")=="placeShip"){
         msg.at("client") = clientID;
         msg.at("count") = round;
@@ -202,11 +204,7 @@ void shotReturned(json &msg, string clientID){
         int tempRow = msg.at("row");
         int tempCol = msg.at("col");
         string tempResult = msg.at("str");
-        if(tempResult.c_str()[0] == HIT){
-            gameVars.shotBoard[tempRow][tempCol]=HIT;
-        }else if(tempResult.c_str()[0] == MISS){
-            gameVars.shotBoard[tempRow][tempCol]=MISS;
-        }
+        gameVars.shotBoard[tempRow][tempCol]=tempResult.c_str()[0];
     }else{
         //do nothing
         //unless... ?
@@ -231,7 +229,7 @@ void shootShot(json &msg){
     getMove(shotRow, shotCol);
     msg.at("row") = shotRow;
     msg.at("col") = shotCol;
-    updateBoard(gameVars.shotBoard, shotRow, shotCol, 1, NONE, SHOT);
+    //updateBoard(gameVars.shotBoard, shotRow, shotCol, 1, NONE, SHOT);
 }
 
 void getMove(int &shotRow, int &shotCol){
@@ -263,7 +261,7 @@ void getFollowUpShot(int &row, int &col){
 }
 
 bool search(int &row, int &col, int rowDelta, int colDelta){
-    for(int range=1; range<=gameVars.maxShipSize; range++){
+    for(int range=1; range<=gameVars.maxShipSize+1; range++){
 		int r=row+rowDelta*range;
 		int c=col+colDelta*range;
 
@@ -272,7 +270,12 @@ bool search(int &row, int &col, int rowDelta, int colDelta){
 		}else if( gameVars.shotBoard[r][c] == WATER ) {
 			row=r; col=c;
 			return true;
-		}else if( gameVars.shotBoard[r][c] == MISS || gameVars.shotBoard[r][c] == KILL ){
+		}else if(   
+                       gameVars.shotBoard[r][c] == MISS 
+                    || gameVars.shotBoard[r][c] == KILL 
+                    || gameVars.shotBoard[r][c] == DUPLICATE_HIT 
+                    || gameVars.shotBoard[r][c] == DUPLICATE_SHOT 
+                ){
 			return false;
 		}else{ 
             //	If it is a hit, just keep running through loop.
@@ -289,24 +292,37 @@ bool isOnBoard( int row, int col ) {
     }
 }
 
+/*
+    X~~X~~X~~X
+    ~X~~X~~X~~
+    ~~X~~X~~X~
+    X~~X~~X~~X
+    ~~~~~~~~~~
+    ~~~~~~~~~~
+    ~~~~~~~~~~
+    ~~~~~~~~~~
+    ~~~~~~~~~~
+    ~~~~~~~~~~
+*/
+
 void scan(int &row, int &col){
-    gameVars.scanCol = gameVars.scanCol + gameVars.maxShipSize;
-    if( gameVars.scanCol >= gameVars.boardSize ) {
-	    gameVars.scanCol = gameVars.scanCol % gameVars.boardSize;
-        // if boardSize is multiple of column, could get caught going down columns. 
-        // Adjust if needed.
-        if( gameVars.boardSize % gameVars.maxShipSize == 0 ) {	
-            if( gameVars.scanCol + 1 == gameVars.maxShipSize ) {
-                gameVars.scanCol = 0;
-            } else {
-                gameVars.scanCol++;
+    int starting_col=0;
+    while(starting_col<gameVars.boardSize){
+        for(gameVars.scanRow=0; gameVars.scanRow < gameVars.boardSize; gameVars.scanRow++){
+            for(gameVars.scanCol=gameVars.scanRow%3+starting_col; gameVars.scanCol<gameVars.boardSize; gameVars.scanCol += gameVars.maxShipSize-1){
+                if(gameVars.shotBoard[gameVars.scanRow][gameVars.scanCol] == WATER){
+                    row=gameVars.scanRow;
+                    col=gameVars.scanCol;
+                    return;
+                }
             }
         }
-        gameVars.scanRow++;
-        if( gameVars.scanRow >= gameVars.boardSize ) {
-            gameVars.scanRow = 0;
-        }
+        starting_col++;
     }
+    gameVars.scanRow=0;
+    gameVars.scanCol=0;
+    row=0;
+    col=0;
 }
 
 void ensureMaxShipLength(){
