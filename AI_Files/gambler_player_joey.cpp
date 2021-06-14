@@ -34,6 +34,8 @@ using json=nlohmann::json;
 void messageHandler(json &msg, string &clientID, int &round);
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar);
 void placeShip(json &msg);
+bool canPlaceShip(int row,int col,Direction dir,int length, bool canTouch);
+void findSafest(int length, Direction& theDir, int& theRow, int& theCol);
 void shootShot(json &msg);
 void shotReturned(json &msg, string clientID);
 void wipeBoards();
@@ -44,9 +46,11 @@ void socketClose(int sock);
 
 
 struct container{
+    int  round=0;
     int  boardSize=10;
     int  shipLengths[6];
     char shotBoard[10][10];
+    int  opponentShotStatBoard[10][10];
     int  percentageBoard[10][10];
     char shipBoard[10][10];
     int  scanRow=0;
@@ -118,6 +122,7 @@ void messageHandler(json &msg, string &clientID, int &round){
     }else if(msg.at("messageType")=="matchOver"){
         msg.at("client") = clientID;
         msg.at("count") = round;
+        gameVars.round=round;
         wipeBoards();
         for(int i=0;i<6;i++)  {
             gameVars.shipLengths[i] = 0;
@@ -153,44 +158,126 @@ void wipeBoards(){
 }
 
 void placeShip(json &msg){
-    int shipLength = msg.at("length");
+    int length = msg.at("length");
     for(int i=0;i<6;i++){
         if(gameVars.shipLengths[i]==0){
-            gameVars.shipLengths[i]=shipLength;
+            gameVars.shipLengths[i]=length;
             break;
         }
     }
-    int randBorder = 10 - shipLength;
-    int randCol = rand() % randBorder;
-    int randRow = rand() % randBorder; 
-    Direction randDir = Direction(rand() % 2 + 1);
-    bool goodShip = false;
-    while(true){
-        goodShip = true;
-        for(int len=0; len<shipLength; len++){
-            if(randDir == HORIZONTAL){
-                if(gameVars.shipBoard[randRow][randCol+len]!=WATER){
-                    goodShip = false;
-                }
-            } else{
-               if(gameVars.shipBoard[randRow+len][randCol]!=WATER){
-                    goodShip = false;
-                } 
+
+    int row=0, col=0, counter=0;
+    bool roundNice=false;
+    Direction dir = Direction(rand()%2+1);
+    if(gameVars.round<69){
+        while( true ) {
+            counter++;
+            dir = Direction(rand()%2+1);
+            if(dir == HORIZONTAL) {
+                row = rand()%gameVars.boardSize;
+                col = rand()%(gameVars.boardSize-length+1);
+            } else {
+                col = rand()%gameVars.boardSize;
+                row = rand()%(gameVars.boardSize-length+1);
+            }
+            if( canPlaceShip( row,col,dir,length,roundNice ) ) {
+                msg.at("row") = row;
+                msg.at("col") = col;
+                msg.at("dir") = dir;
+                updateBoard(gameVars.shipBoard, row, col, length, dir, SHIP);
+            }
+            if(counter>69){
+                roundNice=true;
             }
         }
-        if(goodShip){
-           break; 
-        }
-        else {
-            randCol = rand() % randBorder;
-            randRow = rand() % randBorder;
-            randDir = Direction(rand() % 2 + 1);
+    } else {
+        while(true) {
+            counter++;
+            findSafest(length, dir, row, col);
+            if( canPlaceShip( row,col, dir, length, roundNice) ) {
+                msg.at("row") = row;
+                msg.at("col") = col;
+                msg.at("dir") = dir;
+                updateBoard(gameVars.shipBoard, row, col, length, dir, SHIP);
+            }
+            if(counter>69) {
+                roundNice = true;
+            }
         }
     }
-    msg.at("row") = randRow;
-    msg.at("col") = randCol;
-    msg.at("dir") = randDir;
-    updateBoard(gameVars.shipBoard, randRow, randCol, msg.at("length"), randDir, SHIP);
+}
+
+bool canPlaceShip(int row,int col,Direction dir,int length, bool canTouch){
+    if(dir == HORIZONTAL) {
+        if(row<0 || row >= gameVars.boardSize) return false;
+        if(col<0 || col >  gameVars.boardSize-length) return false;
+        if(!canTouch && col>0 && gameVars.shotBoard[row][col-1]==SHIP) return false;
+        for(int c=col;c<col+length;c++){
+            if(gameVars.shotBoard[row][c]!=WATER) return false;
+            if(!canTouch && gameVars.shotBoard[row-1][c]==SHIP) return false;
+            if(!canTouch && gameVars.shotBoard[row+1][c]==SHIP) return false;
+        }
+        if(!canTouch && col+length+1<gameVars.boardSize && gameVars.shotBoard[row][col+length+1]==SHIP) return false;
+
+    } else if(dir == VERTICAL) {
+        if(col<0 || col >=  gameVars.boardSize) return false;
+        if(row<0 || row > gameVars.boardSize-length) return false;
+        if(!canTouch && row>0 && gameVars.shotBoard[row-1][col]==SHIP) return false;
+        for(int r=row;r<row+length;r++){
+            if(gameVars.shotBoard[r][col]!=WATER) return false;
+            if(!canTouch && gameVars.shotBoard[r][col+1]==SHIP) return false;
+            if(!canTouch && gameVars.shotBoard[r][col-1]==SHIP) return false;
+        }
+        if(!canTouch && row+length+1<gameVars.boardSize && gameVars.shotBoard[row+length+1][col]==SHIP) return false;
+    }
+    return true;
+}
+
+void findSafest(int length, Direction& theDir, int& theRow, int& theCol) {
+    int hitAmount = 0, minHit = 10000;
+    bool broke=false;
+    // horizontal
+    for(int row=0; row<gameVars.boardSize; row++) {
+        for(int col=0; col<gameVars.boardSize-length+1; col++) {
+            hitAmount=0;
+            broke=false;
+            for(int c=0; c<length; c++) {
+                if(col+c<gameVars.boardSize && gameVars.shotBoard[row][col+c] == WATER) {   //not past the board
+                    hitAmount+=gameVars.opponentShotStatBoard[row][col+c];
+                }else{
+                    broke=true;
+                    break;
+                }
+            }
+            if(!broke && hitAmount<minHit) {
+                minHit = hitAmount;
+                theRow = row;
+                theCol = col;
+                theDir = HORIZONTAL;
+            }
+        }
+    }
+    // VERTICAL
+    for(int col=0; col<gameVars.boardSize; col++) {
+        for(int row=0; row<gameVars.boardSize-length+1; row++) {
+            hitAmount = 0;
+            broke=false;
+            for(int r=0; r<length; r++) {
+                if(row+r<gameVars.boardSize && gameVars.shotBoard[row+r][col] == WATER) {   //not past the board
+                    hitAmount+=gameVars.opponentShotStatBoard[row+r][col];
+                }else{
+                    broke=true;
+                    break;
+                }
+            }
+            if(!broke && hitAmount<minHit) {
+                minHit = hitAmount;
+                theRow = row;
+                theCol = col;
+                theDir = VERTICAL;
+            }
+        }
+    }
 }
 
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
@@ -216,6 +303,9 @@ void shotReturned(json &msg, string clientID){
     }else{
         //do nothing
         //unless... ?
+        int tempRow = msg.at("row");
+        int tempCol = msg.at("col");
+        gameVars.opponentShotStatBoard[tempRow][tempCol]++;
     }
 }
 
@@ -230,14 +320,7 @@ void sendGameVars(json &msg){
 
 void shootShot(json &msg);
 void getMove(int &shotRow, int &shotCol);
-void getFollowUpShot(int &row, int &col);
-bool search(int &row, int &col, int rowDelta, int colDelta);
-bool isOnBoard( int row, int col );
-void findTarget(int &row, int &col);
-bool findUnkilledShips(int &theRow, int &theCol);
-void ensureMaxShipLength();
-bool isValid(int row, int col);
-
+int calcValue(int row, int col);
 
 
 
@@ -257,67 +340,27 @@ void getMove(int &shotRow, int &shotCol){
     shotRow=gameVars.scanRow;
     shotCol=gameVars.scanCol;
 
-    if(gameVars.shotBoard[shotRow][shotCol]==HIT){
-        getFollowUpShot(shotRow, shotCol);
-    }else if(findUnkilledShips(gameVars.scanRow, gameVars.scanCol)){
-        getFollowUpShot(gameVars.scanRow, gameVars.scanCol);    
-        shotRow=gameVars.scanRow;
-        shotCol=gameVars.scanCol;
-    }else{
-        findTarget(gameVars.scanRow, gameVars.scanCol);
-        shotRow=gameVars.scanRow;
-        shotCol=gameVars.scanCol;
+
+    int value=-1,bestValue=-1;
+    int bestRow=0, bestCol=0;
+
+    for(int r=0; r<gameVars.boardSize; r++){
+        for(int c=0; c<gameVars.boardSize; c++){
+            value=calcValue(r, c);
+            if(value>=bestValue){
+                bestValue=value;
+                bestRow=r;
+                bestCol=c;
+            }
+        }
     }
+
+    shotRow=bestRow;
+    shotCol=bestCol;
 }
-
-void getFollowUpShot(int &row, int &col){
-    ensureMaxShipLength();
-    if(search(row, col, -1, 0)){
-        return;
-    }else if(search(row, col, 1, 0)){
-        return;
-    }else if(search(row, col, 0, 1)){
-        return;
-    }else if(search(row, col, 0, -1)){
-        return;
-    }else{
-        findTarget(row, col);
-    }
-}
-
-bool search(int &row, int &col, int rowDelta, int colDelta){
-    for(int range=1; range<=gameVars.maxShipSize+1; range++){
-		int r=row+rowDelta*range;
-		int c=col+colDelta*range;
-
-		if( ! isOnBoard(r,c)){
-			return false;
-		}else if( gameVars.shotBoard[r][c] == WATER ) {
-			row=r; col=c;
-			return true;
-		}else if(   
-                       gameVars.shotBoard[r][c] == MISS 
-                    || gameVars.shotBoard[r][c] == KILL 
-                    || gameVars.shotBoard[r][c] == DUPLICATE_HIT 
-                    || gameVars.shotBoard[r][c] == DUPLICATE_SHOT 
-                ){
-			return false;
-		}
-    }
-    return false;
-}
-
-bool isOnBoard( int row, int col ) {
-    if( row>=0 && row<gameVars.boardSize && col>=0 && col<gameVars.boardSize ){
-        return true;
-    }else{
-        return false;
-    }
-}
-
 
 /*
-    struct container{
+    gameVars{
         int  boardSize=10;
         int  shipLengths[6];
         char shotBoard[10][10];
@@ -329,97 +372,64 @@ bool isOnBoard( int row, int col ) {
     };
 */
 
-void findTarget(int &targetRow, int &targetCol){
-    for(int i=0; i<gameVars.boardSize;i++){
-        for(int j=0; j<gameVars.boardSize;j++){
-            gameVars.percentageBoard[i][j] = 0;
+//shotBoard
+//
+int calcValue(int row, int col){
+    int val = 0;
+    int valIncrease=50;
+    if(gameVars.shotBoard[row][col]!= WATER){
+        return -1;
+    }
+    for(int c=col; c>=0 && c>col-4; c--){
+        char res = gameVars.shotBoard[row][c];
+        if(res==MISS || res==KILL){
+            break;
+        }
+        if(res==HIT){
+            val+=valIncrease;
+        }else{
+            val++;
         }
     }
-    int bestRow = 0;
-    int bestCol = 0;
-    int largestChance = 0;
-    bool whileTrue = true;
-        for(int row = 0; row < gameVars.boardSize; row++){
-            for(int col = 0; col < gameVars.boardSize; col++){
-                if(gameVars.shotBoard[row][col]!=WATER){
-                    gameVars.percentageBoard[row][col]-=100;
-                }
-                for(int i = 0; i < 2; i++){
-                    whileTrue = true;
-                    // Horizontal
-                    if( i == 0){
-                        for(int addCols = 0; addCols < 3; addCols++){
-                            if( isValid(row, (col + addCols)) == false ){
-                                whileTrue = false;
-                            }
-                        }
-                        if (whileTrue == true){
-                            for(int addCols = 0; addCols < 3; addCols++){
-                                gameVars.percentageBoard[row][(col + addCols)]++;
-                            }
-                        }
-                    }
-                    // Vertical
-                    else{
-                        for(int addRows = 0; addRows < 3; addRows++){
-                            if( isValid((row + addRows), col) == false){
-                                whileTrue = false;
-                            }
-                        }
-                        if (whileTrue == true){
-                            for(int addRows = 0; addRows < 3; addRows++){
-                                gameVars.percentageBoard[(row + addRows)][col]++;
-                            }
-                        }
-                    }
-                }
-            }
+    for(int c=col; c<gameVars.boardSize && c<col+4; c++){
+        char res = gameVars.shotBoard[row][c];
+        if(res==MISS || res==KILL){
+            break;
         }
-        for(int row = 0; row < gameVars.boardSize; row++){
-            for(int col = 0; col < gameVars.boardSize; col++){
-                if ( gameVars.percentageBoard[row][col] >= largestChance){
-                    largestChance = gameVars.percentageBoard[row][col];
-                    bestRow = row;
-                    bestCol = col;
-                }
-            }
-        }
-        targetRow = bestRow;
-        targetCol = bestCol;
-}
-
-bool isValid(int row, int col) {
-    if ( ( row >= 0 && row < gameVars.boardSize) && ( col >= 0 && col < gameVars.boardSize)){
-        if( gameVars.shotBoard[row][col] == WATER ){
-            return true;
+        if(res==HIT){
+            val+=valIncrease;
+        }else{
+            val++;
         }
     }
-    return false;
-}
 
-bool findUnkilledShips(int &theRow, int &theCol){
-    for(int row=0;row<gameVars.boardSize;row++){
-        for(int col=0;col<gameVars.boardSize;col++){
-            if(gameVars.shotBoard[row][col]==HIT || gameVars.shotBoard[row][col]==DUPLICATE_HIT){
-                theRow=row;
-                theCol=col;
-                return true;
-            }
+    for(int r=row; r>=0 && r>row-4; r--){
+        char res = gameVars.shotBoard[r][col];
+        if(res==MISS || res==KILL){
+            break;
+        }
+        if(res==HIT){
+            val+=valIncrease;
+        }else{
+            val++;
         }
     }
-    return false;
-}
-
-void ensureMaxShipLength(){
-    for(int i=0;i<6;i++){
-        if(gameVars.shipLengths[i]>gameVars.maxShipSize){
-            gameVars.maxShipSize=gameVars.shipLengths[i];
+    for(int r=row; r<gameVars.boardSize && r<row+4; r++){
+        char res = gameVars.shotBoard[r][col];
+        if(res==MISS || res==KILL){
+            break;
+        }
+        if(res==HIT){
+            val+=valIncrease;
+        }else{
+            val++;
         }
     }
+
+    // ONLY FOR LEARNING GAMBLER
+    // return val + opponentShipStatBoard[row][col]/30;
+    return val;
 }
-
-
-
 
 
 

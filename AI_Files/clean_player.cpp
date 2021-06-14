@@ -1,3 +1,11 @@
+/**
+ * @author Matthew Bouch, Joey Gorski, // maybe?? Stefan Brandle, Jonathan Geisler
+ * @date January, 2021
+ * 
+ * 
+ * 
+ */
+
 #include <iostream>
 #include <string>
 #include <stdio.h>
@@ -33,6 +41,13 @@ void sendGameVars(json &msg);
 int  socketConnect(int sock, const char *socket_name);
 int  socketOpen(const char *socket_name);
 void socketClose(int sock);
+void shootShot(json &msg);
+void getMove(int &shotRow, int &shotCol);
+void getFollowUpShot(int &row, int &col);
+bool search(int &row, int &col, int rowDelta, int colDelta);
+bool isOnBoard( int row, int col );
+void scan(int &row, int &col);
+void ensureMaxShipLength();
 
 
 struct container{
@@ -212,17 +227,8 @@ void shotReturned(json &msg, string clientID){
 }
 
 void sendGameVars(json &msg){
-    msg.at("str") = "Joey Gorski"; // Your author name(s) here
+    msg.at("str") = "Joey Gorski and Matthew Bouch"; // Your author name(s) here
 }
-
-
-void shootShot(json &msg);
-void getMove(int &shotRow, int &shotCol);
-void getFollowUpShot(int &row, int &col);
-bool search(int &row, int &col, int rowDelta, int colDelta);
-bool isOnBoard( int row, int col );
-void scan(int &row, int &col);
-void ensureMaxShipLength();
 
 void shootShot(json &msg){
     int shotRow=0, shotCol=0;
@@ -237,8 +243,10 @@ void getMove(int &shotRow, int &shotCol){
     shotCol=gameVars.scanCol;
 
     if(gameVars.shotBoard[gameVars.scanRow][gameVars.scanCol]==HIT){
+        //if it hits
         getFollowUpShot(shotRow, shotCol);
     }else{
+        //if it misses
         scan(gameVars.scanRow, gameVars.scanCol);
         shotRow=gameVars.scanRow;
         shotCol=gameVars.scanCol;
@@ -277,11 +285,9 @@ bool search(int &row, int &col, int rowDelta, int colDelta){
                     || gameVars.shotBoard[r][c] == DUPLICATE_SHOT 
                 ){
 			return false;
-		}else{ 
-            //	If it is a hit, just keep running through loop.
 		}
     }
-    return false;	// Guess we couldn't find anything.
+    return false;
 }
 
 bool isOnBoard( int row, int col ) {
@@ -292,18 +298,6 @@ bool isOnBoard( int row, int col ) {
     }
 }
 
-/*
-    X~~X~~X~~X
-    ~X~~X~~X~~
-    ~~X~~X~~X~
-    X~~X~~X~~X
-    ~~~~~~~~~~
-    ~~~~~~~~~~
-    ~~~~~~~~~~
-    ~~~~~~~~~~
-    ~~~~~~~~~~
-    ~~~~~~~~~~
-*/
 
 void scan(int &row, int &col){
     int starting_col=0;

@@ -122,8 +122,8 @@ int main(){
         string clientNameOne = players[aiChoiceOne].name;
         string clientNameTwo = players[aiChoiceTwo].name;
 
-        cout << "clientNameOne: " << clientNameOne << endl
-             << "clientNameTwo: " << clientNameTwo << endl;
+        // cout << "clientNameOne: " << clientNameOne << endl
+        //      << "clientNameTwo: " << clientNameTwo << endl;
 
         string matchFile = clientNameOne + "_vs_" + clientNameTwo + ".log";
         string remove = "rm ./logs/";
@@ -132,7 +132,7 @@ int main(){
         waste=system((touch + matchFile).c_str());
 
         //start game
-        cout << "Running matches..." << endl;
+        cout << endl << "Running..." << endl;
 
         time(&t1);
         waste = runGame(numGames, players[aiChoiceOne], players[aiChoiceTwo], boardSize, matchFile);

@@ -630,7 +630,7 @@ void setupServer(int &max_clients, int (&client_socket)[30], int &sd, int &maste
         exit(EXIT_FAILURE);
     }
 
-    puts("Waiting for connections ...");
+    // puts("Waiting for connections ...");
 }
 
 void prepSockets(fd_set &readfds, int &master_socket, int &max_sd, int &sd, int &countConnected){
@@ -693,7 +693,7 @@ void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_un &addre
     }
 
     //inform user of socket number - used in send and receive commands
-    printf("New connection , sid is %d\n", new_socket);
+    // printf("New connection , sid is %d\n", new_socket);
 
 
     //add new socket to array of sockets
@@ -703,7 +703,7 @@ void masterSocketTouched(int &new_socket, int &master_socket, sockaddr_un &addre
         if( client_socket[i] == -1 )
         {
             client_socket[i] = new_socket;
-            printf("Adding to list of sockets in position %d\n" , i);
+            // printf("Adding to list of sockets in position %d\n" , i);
 
             break;
         }

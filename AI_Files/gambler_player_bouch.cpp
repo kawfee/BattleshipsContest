@@ -42,6 +42,7 @@ int  socketConnect(int sock, const char *socket_name);
 int  socketOpen(const char *socket_name);
 void socketClose(int sock);
 
+void updateImpossibles();
 
 struct container{
     int  boardSize=10;
@@ -330,9 +331,15 @@ bool isOnBoard( int row, int col ) {
 */
 
 void findTarget(int &targetRow, int &targetCol){
+    bool efficientShot[10][10];
     for(int i=0; i<gameVars.boardSize;i++){
         for(int j=0; j<gameVars.boardSize;j++){
-            gameVars.percentageBoard[i][j] = 0;
+            //gameVars.percentageBoard[i][j] = 0;
+            if( (i%3) - (j%3) == 0 ) {
+                efficientShot[i][j] = true;
+            } else {
+                efficientShot[i][j] = false;
+            }
         }
     }
     int bestRow = 0;
@@ -342,12 +349,17 @@ void findTarget(int &targetRow, int &targetCol){
         for(int row = 0; row < gameVars.boardSize; row++){
             for(int col = 0; col < gameVars.boardSize; col++){
                 if(gameVars.shotBoard[row][col]!=WATER){
-                    gameVars.percentageBoard[row][col]-=100;
+                    //gameVars.percentageBoard[row][col]-=200;
                 }
                 for(int i = 0; i < 2; i++){
                     whileTrue = true;
                     // Horizontal
                     if( i == 0){
+                        /*for(int addCols = 0; addCols < 3; addCols++){
+                            if( isValid(row, (col + addCols)) == true ){
+                                gameVars.percentageBoard[row][(col + addCols)]++;
+                            }
+                        }*/
                         for(int addCols = 0; addCols < 3; addCols++){
                             if( isValid(row, (col + addCols)) == false ){
                                 whileTrue = false;
@@ -361,6 +373,11 @@ void findTarget(int &targetRow, int &targetCol){
                     }
                     // Vertical
                     else{
+                        /*for(int addRows = 0; addRows < 3; addRows++){
+                            if( isValid((row + addRows), col) == true){
+                                gameVars.percentageBoard[(row + addRows)][col]++;
+                            }
+                        }*/
                         for(int addRows = 0; addRows < 3; addRows++){
                             if( isValid((row + addRows), col) == false){
                                 whileTrue = false;
@@ -377,7 +394,7 @@ void findTarget(int &targetRow, int &targetCol){
         }
         for(int row = 0; row < gameVars.boardSize; row++){
             for(int col = 0; col < gameVars.boardSize; col++){
-                if ( gameVars.percentageBoard[row][col] >= largestChance){
+                if ( gameVars.percentageBoard[row][col] >= largestChance && efficientShot[row][col]){
                     largestChance = gameVars.percentageBoard[row][col];
                     bestRow = row;
                     bestCol = col;
@@ -386,6 +403,29 @@ void findTarget(int &targetRow, int &targetCol){
         }
         targetRow = bestRow;
         targetCol = bestCol;
+    
+}
+
+
+void updateImpossibles() {
+    bool horizPass=true;
+    bool vertPass=true;
+    for (int row = 0; row<gameVars.boardSize; row++) {
+        for (int col = 0; col<gameVars.boardSize; col++) {
+            if ( (! isValid(row-1, col)) && ((! isValid(row+2,col)) || (!isValid(row+1, col))) ) {
+                vertPass = false;
+            }
+            if ( (! isValid(row, col-1)) && ((! isValid(row, col+2)) || (!isValid(row, col+1))) ) {
+                horizPass = false;
+            }
+            if ( (! vertPass) && (! horizPass) ) {
+                gameVars.shotBoard[row][col] = MISS;
+                gameVars.percentageBoard[row][col] = -1;
+            }
+            vertPass = true;
+            horizPass = true;
+        }
+    }
 }
 
 bool isValid(int row, int col) {
