@@ -926,7 +926,7 @@ bool performAction(string messageType, fd_set &readfds, int &master_socket, int 
 }
 
 bool placeShip(char board[10][10], char shipBoard[10][10], int boardSize, int row, int col, int length, Direction dir, json &msg, json (&ships)[6]){
-    if( (row+length>boardSize || col+length>boardSize) || (row<0 || col<0) ){
+    if( ((row+length>boardSize && dir==VERTICAL) || (col+length>boardSize && dir==HORIZONTAL)) || (row<0 || col<0) ){
         return false;
     }
     if(dir==HORIZONTAL){

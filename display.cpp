@@ -56,31 +56,31 @@ int display(string matchFile, int watchAll, int runChoice, double delay){
          << gotoRowCol(4, 1)   << "client1"      << endl
          << gotoRowCol(6, 1)   << " |0123456789" << endl
          << gotoRowCol(7, 1)   << "------------" << endl
-         << gotoRowCol(8, 1)   << "A|~~~~~~~~~~" << endl
-         << gotoRowCol(9, 1)   << "B|~~~~~~~~~~" << endl
-         << gotoRowCol(10, 1)  << "C|~~~~~~~~~~" << endl
-         << gotoRowCol(11, 1)  << "D|~~~~~~~~~~" << endl
-         << gotoRowCol(12, 1)  << "E|~~~~~~~~~~" << endl
-         << gotoRowCol(13, 1)  << "F|~~~~~~~~~~" << endl
-         << gotoRowCol(14, 1)  << "G|~~~~~~~~~~" << endl
-         << gotoRowCol(15, 1)  << "H|~~~~~~~~~~" << endl
-         << gotoRowCol(16, 1)  << "I|~~~~~~~~~~" << endl
-         << gotoRowCol(17, 1)  << "J|~~~~~~~~~~" << endl;
+         << gotoRowCol(8, 1)   << "0|~~~~~~~~~~" << endl
+         << gotoRowCol(9, 1)   << "1|~~~~~~~~~~" << endl
+         << gotoRowCol(10, 1)  << "2|~~~~~~~~~~" << endl
+         << gotoRowCol(11, 1)  << "3|~~~~~~~~~~" << endl
+         << gotoRowCol(12, 1)  << "4|~~~~~~~~~~" << endl
+         << gotoRowCol(13, 1)  << "5|~~~~~~~~~~" << endl
+         << gotoRowCol(14, 1)  << "6|~~~~~~~~~~" << endl
+         << gotoRowCol(15, 1)  << "7|~~~~~~~~~~" << endl
+         << gotoRowCol(16, 1)  << "8|~~~~~~~~~~" << endl
+         << gotoRowCol(17, 1)  << "9|~~~~~~~~~~" << endl;
         
     cout << gotoRowCol(3, 50)  << "author2" << endl
          << gotoRowCol(4, 50)  << "client2"      << endl
          << gotoRowCol(6, 50)  << " |0123456789" << endl
          << gotoRowCol(7, 50)  << "------------" << endl
-         << gotoRowCol(8, 50)  << "A|~~~~~~~~~~" << endl
-         << gotoRowCol(9, 50)  << "B|~~~~~~~~~~" << endl
-         << gotoRowCol(10, 50) << "C|~~~~~~~~~~" << endl
-         << gotoRowCol(11, 50) << "D|~~~~~~~~~~" << endl
-         << gotoRowCol(12, 50) << "E|~~~~~~~~~~" << endl
-         << gotoRowCol(13, 50) << "F|~~~~~~~~~~" << endl
-         << gotoRowCol(14, 50) << "G|~~~~~~~~~~" << endl
-         << gotoRowCol(15, 50) << "H|~~~~~~~~~~" << endl
-         << gotoRowCol(16, 50) << "I|~~~~~~~~~~" << endl
-         << gotoRowCol(17, 50) << "J|~~~~~~~~~~" << endl;
+         << gotoRowCol(8, 50)  << "0|~~~~~~~~~~" << endl
+         << gotoRowCol(9, 50)  << "1|~~~~~~~~~~" << endl
+         << gotoRowCol(10, 50) << "2|~~~~~~~~~~" << endl
+         << gotoRowCol(11, 50) << "3|~~~~~~~~~~" << endl
+         << gotoRowCol(12, 50) << "4|~~~~~~~~~~" << endl
+         << gotoRowCol(13, 50) << "5|~~~~~~~~~~" << endl
+         << gotoRowCol(14, 50) << "6|~~~~~~~~~~" << endl
+         << gotoRowCol(15, 50) << "7|~~~~~~~~~~" << endl
+         << gotoRowCol(16, 50) << "8|~~~~~~~~~~" << endl
+         << gotoRowCol(17, 50) << "9|~~~~~~~~~~" << endl;
     
     string player1Record = "";
     string player2Record = "";

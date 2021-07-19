@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <cstring>
+#include <vector>
 
 #include "json.hpp"
 #include "defines.h"
@@ -152,6 +153,7 @@ void wipeBoards(){
     }
 }
 
+/*
 void placeShip(json &msg){
     int shipLength = msg.at("length");
     for(int i=0;i<6;i++){
@@ -161,9 +163,17 @@ void placeShip(json &msg){
         }
     }
     int randBorder = 10 - shipLength;
-    int randCol = rand() % randBorder;
-    int randRow = rand() % randBorder; 
+    int randCol=-1;
+    int randRow=-1;
     Direction randDir = Direction(rand() % 2 + 1);
+    if (randDir == HORIZONTAL){
+        randCol = rand() % 10;
+        randRow = rand() % randBorder;
+    }
+    else{ //VERTICAL
+        randCol = rand() % randBorder;
+        randRow = rand() % 10; 
+    } 
     bool goodShip = false;
     while(true){
         goodShip = true;
@@ -172,8 +182,8 @@ void placeShip(json &msg){
                 if(gameVars.shipBoard[randRow][randCol+len]!=WATER){
                     goodShip = false;
                 }
-            } else{
-               if(gameVars.shipBoard[randRow+len][randCol]!=WATER){
+            } else{ //VERTICAL
+                if(gameVars.shipBoard[randRow+len][randCol]!=WATER){
                     goodShip = false;
                 } 
             }
@@ -182,16 +192,71 @@ void placeShip(json &msg){
            break; 
         }
         else {
-            randCol = rand() % randBorder;
-            randRow = rand() % randBorder;
-            randDir = Direction(rand() % 2 + 1);
+            Direction randDir = Direction(rand() % 2 + 1);
+            if (randDir == HORIZONTAL){
+                randCol = rand() % 10;
+                randRow = rand() % randBorder;
+            }
+            else{ //VERTICAL
+                randCol = rand() % randBorder;
+                randRow = rand() % 10; 
+            } 
         }
     }
+    // print row and col and dir
+    cout << "Placing ship at " << randRow << " " << randCol << " " << randDir << " " << shipLength << endl;
     msg.at("row") = randRow;
     msg.at("col") = randCol;
     msg.at("dir") = randDir;
     updateBoard(gameVars.shipBoard, randRow, randCol, msg.at("length"), randDir, SHIP);
 }
+//*/
+void placeShip(json &msg){
+    //declare vars
+    int shipLength = msg.at("length"), change_select_space=1, randRow, randCol;
+    Direction randDir;
+    for(int i=0;i<6;i++){
+        if(gameVars.shipLengths[i]==0){
+            gameVars.shipLengths[i]=shipLength;
+            break;
+        }
+    }
+    while(true){
+        if(change_select_space==1){
+            randDir = Direction(rand() % 2 + 1);
+            if(randDir==HORIZONTAL){
+                randRow=rand()%10;
+                randCol=rand()%(10-(shipLength)-1);
+            }else{
+                randRow=rand()%(10-(shipLength)-1);
+                randCol=rand()%10;
+            }
+            change_select_space=0;
+        }else{
+            for(int len=0; len<shipLength; len++){
+                if(randDir == HORIZONTAL){
+                    if(gameVars.shipBoard[randRow][randCol+len]!=WATER){
+                        change_select_space = 1;
+                    }
+                } else{ //VERTICAL
+                    if(gameVars.shipBoard[randRow+len][randCol]!=WATER){
+                        change_select_space = 1;
+                    } 
+                }
+            }
+            if(change_select_space == 0){
+                break; 
+            }
+        }
+    }
+
+    // print row and col and dir
+    msg.at("row") = randRow;
+    msg.at("col") = randCol;
+    msg.at("dir") = randDir;
+    updateBoard(gameVars.shipBoard, randRow, randCol, shipLength, randDir, SHIP);
+}
+
 
 void updateBoard(char board[10][10], int row, int col, int length, Direction dir, char newChar){
     if(dir==HORIZONTAL){
@@ -212,6 +277,7 @@ void shotReturned(json &msg, string clientID){
         int tempRow = msg.at("row");
         int tempCol = msg.at("col");
         string tempResult = msg.at("str");
+        //cout << "tempResult: " << tempResult << endl;   
         gameVars.shotBoard[tempRow][tempCol]=tempResult.c_str()[0];
     }else{
         //do nothing
@@ -335,14 +401,14 @@ void findTarget(int &targetRow, int &targetCol){
             gameVars.percentageBoard[i][j] = 0;
         }
     }
-    int bestRow = 0;
-    int bestCol = 0;
+    //int bestRow = 0;
+    //int bestCol = 0;
     int largestChance = 0;
     bool whileTrue = true;
         for(int row = 0; row < gameVars.boardSize; row++){
             for(int col = 0; col < gameVars.boardSize; col++){
                 if(gameVars.shotBoard[row][col]!=WATER){
-                    gameVars.percentageBoard[row][col]-=100;
+                    gameVars.percentageBoard[row][col]-=1000;
                 }
                 for(int i = 0; i < 2; i++){
                     whileTrue = true;
@@ -353,6 +419,7 @@ void findTarget(int &targetRow, int &targetCol){
                                 whileTrue = false;
                             }
                         }
+                        // Makes sure the above three spots are valid then adds to the percentage board
                         if (whileTrue == true){
                             for(int addCols = 0; addCols < 3; addCols++){
                                 gameVars.percentageBoard[row][(col + addCols)]++;
@@ -366,6 +433,7 @@ void findTarget(int &targetRow, int &targetCol){
                                 whileTrue = false;
                             }
                         }
+                        // Makes sure the above three spots are valid then adds to the percentage board
                         if (whileTrue == true){
                             for(int addRows = 0; addRows < 3; addRows++){
                                 gameVars.percentageBoard[(row + addRows)][col]++;
@@ -375,17 +443,29 @@ void findTarget(int &targetRow, int &targetCol){
                 }
             }
         }
+        //find highest percent of hitting something
         for(int row = 0; row < gameVars.boardSize; row++){
             for(int col = 0; col < gameVars.boardSize; col++){
-                if ( gameVars.percentageBoard[row][col] >= largestChance){
+                if ( gameVars.percentageBoard[row][col] > largestChance){
                     largestChance = gameVars.percentageBoard[row][col];
-                    bestRow = row;
-                    bestCol = col;
                 }
             }
         }
-        targetRow = bestRow;
-        targetCol = bestCol;
+        //put the highest percent chance squares into a vector
+        // make a vector of integer arrays of size 2
+        std::vector <vector<int>> vecOfInts;
+        for(int row = 0; row < gameVars.boardSize; row++){
+            for(int col = 0; col < gameVars.boardSize; col++){
+                if ( gameVars.percentageBoard[row][col] == largestChance){
+                    // add values to vector
+                    vecOfInts.push_back({row, col});
+                }
+            }
+        }
+        //choose from the vector at random
+        int randNum = rand()%vecOfInts.size();
+        targetRow = vecOfInts[randNum][0];
+        targetCol = vecOfInts[randNum][1];
 }
 
 bool isValid(int row, int col) {
